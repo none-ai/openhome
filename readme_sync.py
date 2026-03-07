@@ -92,9 +92,9 @@ def download_image(url, owner, repo):
     
     # 转换相对路径为绝对路径
     if not url.startswith('http://') and not url.startswith('https://'):
-        # 尝试 main 和 master 分支
+        # 尝试 main 和 master 分支（保留完整路径，如 images/xxx.png）
         for branch in ['main', 'master']:
-            test_url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{url.split('/')[-1]}"
+            test_url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{url}"
             response = session.get(test_url, timeout=10)
             if response.status_code == 200:
                 url = test_url

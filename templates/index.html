@@ -657,14 +657,21 @@
             padding: 0;
             margin: 0;
             color: var(--text-primary);
-            font-size: 1.5rem;
+            font-size: 1.25rem;
+            line-height: 1.2;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 20px;
+            padding: 10px 15px;
             border-bottom: 1px solid var(--border);
+            background: rgba(128, 128, 128, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
         .modal-body {
             padding: 15px 20px;
@@ -721,15 +728,18 @@
         }
         .modal-btn {
             display: inline-block;
-            padding: 10px 20px;
+            padding: 6px 14px;
             background: var(--accent);
             color: white;
             text-decoration: none;
-            border-radius: 8px;
+            border-radius: 6px;
             font-weight: 500;
+            font-size: 0.9rem;
+            transition: background 0.2s;
         }
         .modal-btn:hover {
-            background: var(--accent-hover);
+            background: var(--accent);
+            filter: brightness(0.85);
         }
         .loading {
             text-align: center;

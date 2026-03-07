@@ -1,16 +1,7 @@
 import os
-# 代理配置（用于访问GitHub API）- 留空则直连
-os.environ['HTTP_PROXY'] = ''
-os.environ['HTTPS_PROXY'] = ''
-
-"""
-OpenHome - 个人主页
-现代化风格，可配置，支持GitHub信息爬取和RSS订阅
-"""
 import yaml
 import requests
 import json
-import os
 import time
 from flask import Flask, render_template, jsonify, redirect, url_for, session, flash
 from datetime import datetime
@@ -20,13 +11,20 @@ from io import BytesIO
 from colorthief import ColorThief
 from authlib.integrations.flask_client import OAuth
 
-# Session secret key
-app = Flask(__name__)
-app.secret_key = os.environ.get('SESSION_SECRET', 'dev-secret-key-change-in-production')
+# 代理配置（用于访问GitHub API）- 从环境变量读取，留空则直连
+HTTP_PROXY = os.environ.get('HTTP_PROXY', '')
+HTTPS_PROXY = os.environ.get('HTTPS_PROXY', '')
+if HTTP_PROXY:
+    os.environ['HTTP_PROXY'] = HTTP_PROXY
+if HTTPS_PROXY:
+    os.environ['HTTPS_PROXY'] = HTTPS_PROXY
 
 # 配置静态文件夹用于README图片
 READMES_DIR = os.path.join(os.path.dirname(__file__), 'readmes')
+
+# Session secret key
 app = Flask(__name__, static_folder=READMES_DIR, static_url_path='/static/readmes')
+app.secret_key = os.environ.get('SESSION_SECRET', 'dev-secret-key-change-in-production')
 
 # 缓存配置
 CACHE_DIR = os.path.join(os.path.dirname(__file__), '.cache')
@@ -72,6 +70,32 @@ def init_oauth():
     return False
 
 oauth_enabled = init_oauth()
+
+# Visitor counter
+VISITOR_COUNT_FILE = os.path.join(CACHE_DIR, 'visitor_count.json')
+
+def get_visitor_count():
+    """Get visitor count from file"""
+    try:
+        if os.path.exists(VISITOR_COUNT_FILE):
+            with open(VISITOR_COUNT_FILE, 'r') as f:
+                data = json.load(f)
+                return data.get('count', 0)
+    except Exception as e:
+        print(f"Error reading visitor count: {e}")
+    return 0
+
+def increment_visitor_count():
+    """Increment visitor count"""
+    try:
+        count = get_visitor_count()
+        count += 1
+        with open(VISITOR_COUNT_FILE, 'w') as f:
+            json.dump({'count': count, 'updated': datetime.now().isoformat()}, f)
+        return count
+    except Exception as e:
+        print(f"Error incrementing visitor count: {e}")
+        return get_visitor_count()
 
 # Login required decorator
 def login_required(f):
@@ -615,7 +639,10 @@ def index():
         elif cached_rss and is_cache_valid(rss_time, retry=True):
             rss_items = cached_rss
             print("Using stale RSS cache")
-    
+
+    # Get visitor count
+    visitor_count = increment_visitor_count()
+
     return render_template('index.html',
                          config=config,
                          user_info=user_info,
@@ -627,7 +654,8 @@ def index():
                          contributions=contributions,
                          saved_scheme=saved_scheme,
                          current_user=session.get('user'),
-                         oauth_enabled=oauth_enabled)
+                         oauth_enabled=oauth_enabled,
+                         visitor_count=visitor_count)
 
 @app.route('/api/repos')
 def api_repos():

@@ -28,6 +28,16 @@ social:
   github: "your-github-username"
   email: "your@email.com"
   twitter: "your-twitter"
+  linkedin: "your-linkedin"
+  bluesky: "your-bluesky"
+
+# 技能标签（显示在个人简介下方）
+skills:
+  - "Python"
+  - "JavaScript"
+  - "React"
+  - "Node.js"
+  - "Docker"
 
 # GitHub OAuth 登录配置（可选）
 # 1. 在 GitHub Settings -> Developer settings -> OAuth Apps 创建新应用

@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ config.bio.name }} - 个人主页</title>
+    <meta name="description" content="{{ config.bio.description }}">
+    <meta name="keywords" content="{{ config.bio.name }},{{ config.bio.title }},github,developer">
+    <meta property="og:title" content="{{ config.bio.name }} - 个人主页">
+    <meta property="og:description" content="{{ config.bio.description }}">
+    <meta property="og:type" content="website">
+    {% if user_info and user_info.avatar_url %}
+    <meta property="og:image" content="{{ user_info.avatar_url }}">
+    {% endif %}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ config.bio.name }} - 个人主页">
+    <meta name="twitter:description" content="{{ config.bio.description }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -503,7 +514,27 @@
                     Twitter
                 </a>
                 {% endif %}
+                {% if config.social.linkedin %}
+                <a href="https://linkedin.com/in/{{ config.social.linkedin }}" target="_blank" class="social-link">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                    LinkedIn
+                </a>
+                {% endif %}
+                {% if config.social.bluesky %}
+                <a href="https://bsky.app/profile/{{ config.social.bluesky }}" target="_blank" class="social-link">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12.186 2.553c.99 0 2.757.396 4.282 1.587 1.905 1.492 2.512 3.728 1.813 5.526-.91 2.339-2.786 4.227-5.095 5.226-1.113.482-2.227.745-3.226.745-.826 0-1.605-.17-2.24-.455v3.661c.576.216 1.232.35 1.932.35 2.56 0 4.686-1.457 5.769-3.582.783-1.534 1.068-3.21.797-4.865-.275-1.677-.988-3.137-2.025-4.207-1.267-1.305-2.9-1.986-4.782-1.986-1.17 0-2.27.263-3.182.762v3.897c.738-.373 1.647-.598 2.615-.598 1.65 0 2.971.753 3.862 2.124.677 1.043.993 2.27.918 3.537-.05.84-.227 1.65-.52 2.393-.61 1.543-1.66 2.78-3.003 3.523-1.27.703-2.72 1.09-4.232 1.09-1.35 0-2.62-.29-3.712-.83v3.395c.937.453 2.027.7 3.18.7 2.47 0 4.536-1.17 5.74-3.17 1.38-1.285 2.17-3.04 2.17-5.023 0-1.52-.52-2.92-1.42-4.012-.95-1.15-2.27-1.928-3.82-2.246v-.096c.43-.154.82-.364 1.166-.627.914-.696 1.424-1.72 1.424-2.878 0-.753-.21-1.445-.59-2.045-.38-.6-.92-1.074-1.57-1.398v-.075c.95-.32 1.73-.93 2.25-1.77.52-.84.78-1.81.78-2.9 0-.64-.12-1.24-.35-1.78-.23-.55-.56-1.02-.98-1.41z"/></svg>
+                    Bluesky
+                </a>
+                {% endif %}
             </div>
+            <!-- Skills Section -->
+            {% if config.skills %}
+            <div class="skills" style="display:flex;justify-content:center;gap:8px;margin-top:1rem;flex-wrap:wrap;">
+                {% for skill in config.skills %}
+                <span class="skill-tag" style="background:var(--bg-tertiary);color:var(--accent);padding:4px 12px;border-radius:20px;font-size:0.85rem;">{{ skill }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
             <!-- Color Scheme Buttons -->
             <div class="color-schemes" style="display:flex;justify-content:center;gap:6px;margin-top:1rem">
                 {% for color in theme_colors.palette[:5] %}
@@ -885,6 +916,9 @@
         <!-- Footer -->
         <footer>
             <p>Created by Claw</p>
+            {% if visitor_count %}
+            <p style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-muted);">👁️ {{ visitor_count }} visitors</p>
+            {% endif %}
         </footer>
     </div>
     <script>

@@ -541,43 +541,28 @@ def get_readme(owner, repo):
 
 @app.route('/api/rss/<path:url>')
 def get_rss_content(url):
-    """获取RSS文章内容"""
+    """获取RSS文章内容（从缓存）"""
     import urllib.parse
-    from bs4 import BeautifulSoup
     
     # 解码URL
     url = urllib.parse.unquote(url)
     
     try:
-        response = requests.get(url, timeout=10)
-        response.encoding = 'utf-8'
+        from readme_sync import get_rss_cache, fetch_and_cache_rss
         
-        soup = BeautifulSoup(response.text, 'html.parser')
+        # 尝试从缓存获取
+        cached = get_rss_cache(url)
+        if cached:
+            return jsonify({
+                'status': 'ok',
+                'title': cached.get('title', ''),
+                'html': cached.get('html', ''),
+                'url': url
+            })
         
-        # 尝试获取文章内容
-        article = soup.find('article') or soup.find('main') or soup.find('div', class_='content')
-        
-        if article:
-            # 清理脚本和样式
-            for tag in article.find_all(['script', 'style', 'nav', 'footer', 'header']):
-                tag.decompose()
-            html_content = str(article)
-        else:
-            # 如果没找到，返回整个body
-            body = soup.find('body')
-            if body:
-                for tag in body.find_all(['script', 'style', 'nav', 'footer', 'header']):
-                    tag.decompose()
-                html_content = str(body)
-            else:
-                html_content = response.text[:5000]
-        
-        return jsonify({
-            'status': 'ok',
-            'title': soup.title.string if soup.title else url,
-            'html': html_content,
-            'url': url
-        })
+        # 缓存没有则获取并缓存
+        result = fetch_and_cache_rss(url)
+        return jsonify(result)
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 

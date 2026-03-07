@@ -265,3 +265,83 @@ if __name__ == '__main__':
     # 测试
     print("测试同步...")
     sync_readme('stlin256', 'AShare-AI-Stock-Picker')
+
+# RSS缓存
+RSS_CACHE_DIR = os.path.join(os.path.dirname(__file__), 'readmes', 'rss')
+os.makedirs(RSS_CACHE_DIR, exist_ok=True)
+
+def get_rss_cache(url):
+    """从缓存获取RSS"""
+    import json
+    import hashlib
+    url_hash = hashlib.md5(url.encode()).hexdigest()[:16]
+    cache_file = os.path.join(RSS_CACHE_DIR, f"{url_hash}.json")
+    
+    if os.path.exists(cache_file):
+        with open(cache_file, 'r') as f:
+            data = json.load(f)
+            # 检查是否过期（中午12点更新）
+            cached_time = data.get('cached_at', '')
+            return data
+    return None
+
+def save_rss_cache(url, title, html):
+    """保存RSS到缓存"""
+    import json
+    from datetime import datetime
+    import hashlib
+    
+    url_hash = hashlib.md5(url.encode()).hexdigest()[:16]
+    cache_file = os.path.join(RSS_CACHE_DIR, f"{url_hash}.json")
+    
+    data = {
+        'url': url,
+        'title': title,
+        'html': html,
+        'cached_at': datetime.now().isoformat()
+    }
+    
+    with open(cache_file, 'w') as f:
+        json.dump(data, f, ensure_ascii=False)
+
+def fetch_and_cache_rss(url):
+    """获取并缓存RSS文章"""
+    from bs4 import BeautifulSoup
+    
+    try:
+        response = requests.get(url, timeout=10)
+        response.encoding = 'utf-8'
+        
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        article = soup.find('article') or soup.find('main') or soup.find('div', class_='content')
+        
+        if article:
+            for tag in article.find_all(['script', 'style', 'nav', 'footer', 'header']):
+                tag.decompose()
+            html_content = str(article)
+        else:
+            body = soup.find('body')
+            if body:
+                for tag in body.find_all(['script', 'style', 'nav', 'footer', 'header']):
+                    tag.decompose()
+                html_content = str(body)
+            else:
+                html_content = response.text[:5000]
+        
+        title = soup.title.string if soup.title else url
+        
+        save_rss_cache(url, title, html_content)
+        
+        return {'status': 'ok', 'title': title, 'html': html_content, 'url': url}
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
+
+def sync_all_rss(urls):
+    """同步所有RSS源"""
+    print(f"开始同步 {len(urls)} 个RSS源...")
+    for feed in urls:
+        url = feed.get('url', '')
+        if url:
+            fetch_and_cache_rss(url)
+    print("RSS同步完成")

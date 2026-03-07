@@ -28,3 +28,15 @@ social:
   github: "your-github-username"
   email: "your@email.com"
   twitter: "your-twitter"
+
+# GitHub OAuth 登录配置（可选）
+# 1. 在 GitHub Settings -> Developer settings -> OAuth Apps 创建新应用
+# 2. 设置 Homepage URL 为你的网站地址
+# 3. 设置 Authorization callback URL 为 your-site-url/callback
+# 4. 将生成的 Client ID 和 Client Secret 填入下方
+oauth:
+  github_client_id: ""
+  github_client_secret: ""
+
+# Session secret key（生产环境请使用复杂的随机字符串）
+# session_secret: "your-secret-key-here"

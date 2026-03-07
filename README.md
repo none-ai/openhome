@@ -30,6 +30,9 @@ cp config.example.yaml config.yaml
 # GitHub用户名
 github_username: "your-github-username"
 
+# GitHub Token（可选，用于提高API调用限制）
+github_token: "ghp_xxxxxxxxxxxxxxxxxxxx"
+
 # 端口号
 port: 8004
 
@@ -64,9 +67,29 @@ python app.py
 
 打开浏览器访问 http://localhost:8004
 
-## 环境变量
+## GitHub Token 配置
 
-可选配置代理（用于访问 GitHub API）：
+### 为什么需要 Token？
+
+- 无 Token：每小时 60 次请求限制
+- 有 Token：每小时 5000 次请求限制
+
+### 如何生成 Token？
+
+1. 登录 GitHub
+2. 进入 Settings -> Developer settings -> Personal access tokens -> Tokens (classic)
+3. 点击 "Generate new token (classic)"
+4. 勾选 `repo` 权限
+5. 生成后将 Token 添加到 `config.yaml`
+
+### 注意
+
+- Token 会保存在 `config.yaml` 中，该文件已加入 `.gitignore`，不会提交到 Git
+- 如果不配置 Token，GitHub API 会有每小时 60 次请求限制
+
+## 环境变量（可选）
+
+如果需要通过代理访问 GitHub：
 
 ```bash
 export HTTP_PROXY=http://127.0.0.1:7890
@@ -103,7 +126,7 @@ openhome/
 ├── config.example.yaml # 配置示例
 ├── requirements.txt    # Python 依赖
 ├── .gitignore         # Git 忽略配置
-├── .cache/            # 颜色缓存目录（自动生成）
+├── .cache/            # 缓存目录（自动生成）
 ├── templates/
 │   └── index.html     # 主页模板
 └── static/
@@ -115,6 +138,7 @@ openhome/
 | 配置项 | 说明 |
 |--------|------|
 | `github_username` | GitHub 用户名，用于获取公开仓库 |
+| `github_token` | GitHub Token（可选），提高 API 限制 |
 | `port` | 服务端口号，默认 8004 |
 | `rss_feeds` | RSS 订阅源列表 |
 | `bio.name` | 你的名字 |
@@ -126,16 +150,10 @@ openhome/
 ## API 接口
 
 - `GET /` - 主页面
-- `GET /api/repos` - 获取 GitHub 仓库列表
-- `GET /api/rss` - 获取 RSS 订阅内容
-- `GET /api/clear-cache` - 清除主题色缓存
+- `GET /api/clear-cache` - 清除缓存
 
 ## 注意事项
 
 - `config.yaml` 已加入 `.gitignore`，不会提交到 Git 仓库
 - `.cache/` 目录已加入 `.gitignore`，不会提交
 - 请使用 `config.example.yaml` 作为模板创建自己的配置
-
-## 许可证
-
-MIT

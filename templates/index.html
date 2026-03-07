@@ -486,6 +486,14 @@
                 </a>
                 {% endif %}
             </div>
+            <!-- Color Scheme Buttons -->
+            <div class="color-schemes" style="display:flex;justify-content:center;gap:6px;margin-top:1rem">
+                {% for color in theme_colors.palette[:5] %}
+                <button class="scheme-btn" data-scheme="{{ loop.index0 }}" 
+                    style="width:20px;height:20px;border-radius:50%;border:1px solid var(--border);cursor:pointer;padding:0;background:linear-gradient(135deg, {{ color }}, {% if loop.index < theme_colors.palette|length %}{{ theme_colors.palette[loop.index] }}{% else %}{{ color }}{% endif %})"
+                    title="配色{{ loop.index }}"></button>
+                {% endfor %}
+            </div>
         </header>
 
         <!-- GitHub Stats -->
@@ -496,19 +504,13 @@
                 <div class="stat-label">Repositories</div>
             </div>
             <div class="stat-card">
+                <div class="stat-value">{{ total_stars }}</div>
+                <div class="stat-label">Stars</div>
+            </div>
+            <div class="stat-card">
                 <div class="stat-value">{{ user_info.followers }}</div>
                 <div class="stat-label">Followers</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value">{{ user_info.following }}</div>
-                <div class="stat-label">Following</div>
-            </div>
-            {% if user_info.blog %}
-            <div class="stat-card">
-                <div class="stat-value" style="font-size: 1rem;">{{ user_info.blog[:15] }}</div>
-                <div class="stat-label">Blog</div>
-            </div>
-            {% endif %}
         </div>
         {% endif %}
 
@@ -527,7 +529,7 @@
                     {% for week in contributions.weeks[:52] %}
                     <div class="contribution-week">
                         {% for day in week.contributionDays %}
-                        <div class="contribution-day c{{ min(day.contributionCount, 55) }}" data-date="{{ day.date }}" title="{{ day.date }}: {{ day.contributionCount }} contributions"></div>
+                        <div class="contribution-day c{% if day.contributionCount > 55 %}55{% else %}{{ day.contributionCount }}{% endif %}" data-date="{{ day.date }}" title="{{ day.date }}: {{ day.contributionCount }} contributions"></div>
                         {% endfor %}
                     </div>
                     {% endfor %}
@@ -598,8 +600,62 @@
 
         <!-- Footer -->
         <footer>
-            <p>Built with ❤️ · Powered by Claude</p>
+            <p>Created by Claw</p>
         </footer>
     </div>
+    <script>
+        // Palette colors from avatar
+        const palette = {{ theme_colors.palette | tojson }};
+        
+        const themes = palette.map((color, index) => ({
+            primary: color,
+            secondary: palette[index + 1] || color,
+            gradientStart: color,
+            gradientEnd: palette[index + 1] || color
+        }));
+        
+        let currentScheme = '{{ saved_scheme }}' || localStorage.getItem('colorScheme') || '0';
+        
+        function applyTheme(theme) {
+            const root = document.documentElement;
+            root.style.setProperty('--accent', theme.primary);
+            root.style.setProperty('--accent-hover', theme.secondary);
+            root.style.setProperty('--gradient-start', theme.gradientStart);
+            root.style.setProperty('--gradient-end', theme.gradientEnd);
+        }
+        
+        function initTheme() {
+            const idx = parseInt(currentScheme);
+            if (idx >= 0 && idx < themes.length) {
+                applyTheme(themes[idx]);
+            }
+            document.querySelectorAll('.scheme-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.scheme === currentScheme) btn.classList.add('active');
+            });
+        }
+        
+        document.querySelectorAll('.scheme-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                currentScheme = this.dataset.scheme;
+                localStorage.setItem('colorScheme', currentScheme);
+                // Save to server for multi-device sync
+                fetch('/api/save-scheme', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({scheme: currentScheme})
+                });
+                initTheme();
+            });
+        });
+        
+        initTheme();
+        
+        // Scroll contribution grid to right (latest)
+        const contribGrid = document.querySelector('.contribution-grid');
+        if (contribGrid) {
+            contribGrid.scrollLeft = contribGrid.scrollWidth;
+        }
+    </script>
 </body>
 </html>

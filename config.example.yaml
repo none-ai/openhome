@@ -4,6 +4,10 @@
 # GitHub用户名（用于获取公开的仓库信息）
 github_username: "octocat"
 
+# GitHub Token（可选，用于提高API调用限制）
+# 在 GitHub 设置 -> Developer settings -> Personal access tokens 生成
+# github_token: "ghp_xxxxxxxxxxxx"
+
 # 服务器端口号
 port: 8004
 

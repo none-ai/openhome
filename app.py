@@ -25,6 +25,11 @@ CACHE_DIR = os.path.join(os.path.dirname(__file__), '.cache')
 CACHE_FILE = os.path.join(CACHE_DIR, 'theme_colors.json')
 CACHE_EXPIRE = 3600 * 24  # 缓存24小时
 
+# GitHub数据缓存配置
+GITHUB_CACHE_FILE = os.path.join(CACHE_DIR, 'github_data.json')
+GITHUB_CACHE_EXPIRE = 3600  # GitHub数据1小时
+GITHUB_CACHE_RETRY = 900    # 失败15分钟重试
+
 # 确保缓存目录存在
 os.makedirs(CACHE_DIR, exist_ok=True)
 
@@ -162,19 +167,79 @@ def smart_adjust_color(rgb):
     adjusted = adjust_color_lightness(adjusted)
     return adjusted
 
+# GitHub数据缓存管理
+def get_github_cache(key):
+    """从缓存获取GitHub数据"""
+    if not os.path.exists(GITHUB_CACHE_FILE):
+        return None, None
+    try:
+        with open(GITHUB_CACHE_FILE, 'r') as f:
+            cache = json.load(f)
+        if key in cache:
+            cached = cache[key]
+            return cached.get('data'), cached.get('timestamp')
+    except Exception as e:
+        print(f"Error reading GitHub cache: {e}")
+    return None, None
+
+def save_github_cache(key, data, error=None):
+    """保存GitHub数据到缓存"""
+    try:
+        cache = {}
+        if os.path.exists(GITHUB_CACHE_FILE):
+            with open(GITHUB_CACHE_FILE, 'r') as f:
+                cache = json.load(f)
+        cache[key] = {
+            'data': data,
+            'error': error,
+            'timestamp': time.time()
+        }
+        with open(GITHUB_CACHE_FILE, 'w') as f:
+            json.dump(cache, f)
+    except Exception as e:
+        print(f"Error saving GitHub cache: {e}")
+
+def is_cache_valid(timestamp, retry=False):
+    """检查缓存是否有效"""
+    if timestamp is None:
+        return False
+    expire = GITHUB_CACHE_RETRY if retry else GITHUB_CACHE_EXPIRE
+    return time.time() - timestamp < expire
+
 # GitHub API 获取用户信息
 def get_github_user(username):
+    # 先检查缓存
+    cached_data, cached_time = get_github_cache(f'user_{username}')
+    if cached_data and is_cache_valid(cached_time):
+        print(f"Using cached user data for {username}")
+        return cached_data
+    
     url = f"https://api.github.com/users/{username}"
     try:
         response = requests.get(url, timeout=10)
         if response.status_code == 200:
-            return response.json()
+            data = response.json()
+            save_github_cache(f'user_{username}', data)
+            return data
+        else:
+            if cached_data:
+                print(f"Using stale cache for user {username}")
+                return cached_data
     except Exception as e:
         print(f"Error fetching GitHub user: {e}")
+        if cached_data and is_cache_valid(cached_time, retry=True):
+            print(f"Using stale cache for user {username} (retry)")
+            return cached_data
     return None
 
 # GitHub API 获取用户仓库
 def get_github_repos(username):
+    # 先检查缓存
+    cached_data, cached_time = get_github_cache(f'repos_{username}')
+    if cached_data and is_cache_valid(cached_time):
+        print(f"Using cached repos for {username}")
+        return cached_data
+    
     url = f"https://api.github.com/users/{username}/repos?sort=updated&per_page=100"
     try:
         response = requests.get(url, timeout=10)
@@ -183,14 +248,26 @@ def get_github_repos(username):
             # 过滤掉fork的仓库，按star数量排序
             repos = [r for r in repos if not r.get('fork', False)]
             repos.sort(key=lambda x: x.get('stargazers_count', 0), reverse=True)
-            return repos[:12]  # 返回前12个
+            result = repos[:12]
+            save_github_cache(f'repos_{username}', result)
+            return result
     except Exception as e:
         print(f"Error fetching GitHub repos: {e}")
+    
+    if cached_data and is_cache_valid(cached_time, retry=True):
+        print(f"Using stale cache for repos {username}")
+        return cached_data
     return []
 
 # GitHub GraphQL API 获取贡献数据
 def get_github_contributions(username):
     """使用GitHub GraphQL API获取用户的贡献数据"""
+    # 先检查缓存
+    cached_data, cached_time = get_github_cache(f'contrib_{username}')
+    if cached_data and is_cache_valid(cached_time):
+        print(f"Using cached contributions for {username}")
+        return cached_data
+    
     url = "https://api.github.com/graphql"
     token = os.environ.get('GITHUB_TOKEN', '')
     
@@ -220,12 +297,18 @@ def get_github_contributions(username):
                 data = response.json()
                 if 'data' in data and data['data'].get('user'):
                     calendar = data['data']['user']['contributionsCollection']['contributionCalendar']
-                    return {
+                    result = {
                         'total': calendar.get('totalContributions', 0),
                         'weeks': calendar.get('weeks', [])
                     }
+                    save_github_cache(f'contrib_{username}', result)
+                    return result
     except Exception as e:
         print(f"Error fetching GitHub contributions: {e}")
+    
+    if cached_data and is_cache_valid(cached_time, retry=True):
+        print(f"Using stale cache for contributions {username}")
+        return cached_data
     return None
 
 # 从头像提取主题色（带智能调整和缓存）
@@ -308,30 +391,60 @@ def parse_rss(feed_url):
 @app.route('/')
 def index():
     github_username = config.get('github_username', '')
+    github_token = config.get('github_token', '')
+    if github_token:
+        os.environ['GITHUB_TOKEN'] = github_token
+    
     user_info = get_github_user(github_username) if github_username else None
     repos = get_github_repos(github_username) if github_username else []
     contributions = get_github_contributions(github_username) if github_username else None
+    
+    # 计算总star数
+    total_stars = sum(r.get('stargazers_count', 0) for r in repos) if repos else 0
     
     # 提取主题色（带缓存）
     theme_colors = {'primary': '#d97706', 'secondary': '#f59e0b', 'gradient_start': '#d97706', 'gradient_end': '#dc2626', 'primary_rgb': [217, 119, 6]}
     if user_info and user_info.get('avatar_url'):
         theme_colors = get_theme_colors(user_info['avatar_url'], github_username)
     
-    # 获取RSS内容
-    rss_items = []
-    for feed in config.get('rss_feeds', []):
-        items = parse_rss(feed.get('url', ''))
-        for item in items:
-            item['source'] = feed.get('name', '')
-        rss_items.extend(items)
+    # 加载配色方案
+    saved_scheme = '0'
+    scheme_file = os.path.join(os.path.dirname(__file__), '.cache', 'color_scheme.txt')
+    if os.path.exists(scheme_file):
+        try:
+            with open(scheme_file, 'r') as f:
+                saved_scheme = f.read().strip()
+        except:
+            pass
+    
+    # 获取RSS内容（带缓存）
+    rss_cache_key = 'rss_feeds'
+    cached_rss, rss_time = get_github_cache(rss_cache_key)
+    if cached_rss and is_cache_valid(rss_time):
+        rss_items = cached_rss
+        print("Using cached RSS feeds")
+    else:
+        rss_items = []
+        for feed in config.get('rss_feeds', []):
+            items = parse_rss(feed.get('url', ''))
+            for item in items:
+                item['source'] = feed.get('name', '')
+            rss_items.extend(items)
+        if rss_items:
+            save_github_cache(rss_cache_key, rss_items)
+        elif cached_rss and is_cache_valid(rss_time, retry=True):
+            rss_items = cached_rss
+            print("Using stale RSS cache")
     
     return render_template('index.html',
                          config=config,
                          user_info=user_info,
                          repos=repos,
+                         total_stars=total_stars,
                          rss_items=rss_items[:10],
                          theme_colors=theme_colors,
-                         contributions=contributions)
+                         contributions=contributions,
+                         saved_scheme=saved_scheme)
 
 @app.route('/api/repos')
 def api_repos():
@@ -357,6 +470,20 @@ def clear_cache():
         if os.path.exists(CACHE_FILE):
             os.remove(CACHE_FILE)
         return jsonify({'status': 'ok', 'message': 'Cache cleared'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/api/save-scheme', methods=['POST'])
+def save_scheme():
+    """保存配色方案到服务器"""
+    from flask import request
+    try:
+        scheme = request.json.get('scheme', '0')
+        scheme_file = os.path.join(os.path.dirname(__file__), '.cache', 'color_scheme.txt')
+        os.makedirs(os.path.dirname(scheme_file), exist_ok=True)
+        with open(scheme_file, 'w') as f:
+            f.write(str(scheme))
+        return jsonify({'status': 'ok'})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 

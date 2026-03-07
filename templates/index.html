@@ -619,7 +619,7 @@
                     mermaid.initialize({ startOnLoad: false, theme: 'dark' });
                 </script>
                 <div class="modal-footer">
-                    <a id="modalLink" href="#" target="_blank" class="modal-btn">在 GitHub 上查看 →</a>
+                    <a id="modalLink" href="#" target="_blank" class="modal-btn">View on GitHub →</a>
                 </div>
             </div>
         </div>
@@ -795,7 +795,7 @@
             document.getElementById('modalTitle').textContent = '加载中...';
             document.getElementById('modalBody').innerHTML = '<div class="loading">Loading...</div>';
             document.getElementById('modalLink').href = link;
-            document.getElementById('modalLink').textContent = '在浏览器中打开 →';
+            document.getElementById('modalLink').textContent = 'Open in Browser →';
             document.getElementById('repoModal').style.display = 'block';
             
             fetch('/api/rss/' + encodeURIComponent(link))
@@ -808,11 +808,11 @@
                             mermaid.run();
                         }
                     } else {
-                        document.getElementById('modalBody').innerHTML = '<p>无法加载内容</p><p><a href="' + link + '" target="_blank">在浏览器中打开 →</a></p>';
+                        document.getElementById('modalBody').innerHTML = '<p>无法加载内容</p><p><a href="' + link + '" target="_blank">Open in Browser →</a></p>';
                     }
                 })
                 .catch(err => {
-                    document.getElementById('modalBody').innerHTML = '<p>加载失败: ' + err + '</p><p><a href="' + link + '" target="_blank">在浏览器中打开 →</a></p>';
+                    document.getElementById('modalBody').innerHTML = '<p>加载失败: ' + err + '</p><p><a href="' + link + '" target="_blank">Open in Browser →</a></p>';
                 });
         }
         

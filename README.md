@@ -2,6 +2,8 @@
 
 现代化风格的个人主页，支持展示 GitHub 仓库、贡献图、博客 RSS 订阅等功能。
 
+![Screenshot](https://raw.githubusercontent.com/none-ai/openhome/main/screenshot.jpg)
+
 ## 特性
 
 - 🎨 现代化深色主题

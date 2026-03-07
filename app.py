@@ -408,6 +408,8 @@ def index():
             import threading
             # 后台同步（不阻塞页面加载）
             def background_sync():
+                import time
+                time.sleep(5)  # 等待页面加载完成后再同步
                 sync_all_readmes(repos)
                 start_sync_scheduler(repos)
             threading.Thread(target=background_sync, daemon=True).start()

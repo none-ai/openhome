@@ -8,6 +8,18 @@ import time
 import yaml
 import requests
 import base64
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+# 不使用代理
+os.environ['HTTP_PROXY'] = ''
+os.environ['HTTPS_PROXY'] = ''
+os.environ['http_proxy'] = ''
+os.environ['https_proxy'] = ''
+
+# 创建session with better retry logic
+session = requests.Session()
+session.mount('https://', HTTPAdapter(max_retries=Retry(total=2, backoff_factor=0.5)))
 import hashlib
 from datetime import datetime
 from threading import Thread
@@ -40,7 +52,7 @@ def get_repo_info(owner, repo):
         headers['Authorization'] = f"Bearer {token}"
     
     try:
-        response = requests.get(url, headers=headers, timeout=10)
+        response = session.get(url, headers=headers, timeout=10)
         if response.status_code == 200:
             data = response.json()
             return {
@@ -57,14 +69,14 @@ def get_readme_content(owner, repo):
     """获取README内容"""
     token = get_github_token()
     
-    for filename in ['README.md', 'readme.md', 'README.rst', 'README']:
+    for filename in ['README.md', 'readme.md', 'README.MD', 'Readme.md', 'README.rst', 'readme.rst', 'README']:
         url = f"https://api.github.com/repos/{owner}/{repo}/contents/{filename}"
         headers = {}
         if token:
             headers['Authorization'] = f"Bearer {token}"
         
         try:
-            response = requests.get(url, headers=headers, timeout=10)
+            response = session.get(url, headers=headers, timeout=10)
             if response.status_code == 200:
                 data = response.json()
                 content = base64.b64decode(data['content']).decode('utf-8')
@@ -80,7 +92,13 @@ def download_image(url, owner, repo):
     
     # 转换相对路径为绝对路径
     if not url.startswith('http://') and not url.startswith('https://'):
-        url = f"https://raw.githubusercontent.com/{owner}/{repo}/main/{url}"
+        # 尝试 main 和 master 分支
+        for branch in ['main', 'master']:
+            test_url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{url.split('/')[-1]}"
+            response = session.get(test_url, timeout=10)
+            if response.status_code == 200:
+                url = test_url
+                break
     
     # 生成唯一文件名
     url_hash = hashlib.md5(url.encode()).hexdigest()[:10]
@@ -93,7 +111,7 @@ def download_image(url, owner, repo):
         return f"/static/readmes/images/{filename}"
     
     try:
-        response = requests.get(url, timeout=30)
+        response = session.get(url, timeout=30)
         if response.status_code == 200:
             with open(filepath, 'wb') as f:
                 f.write(response.content)
@@ -108,11 +126,15 @@ def process_readme_images(content, owner, repo):
     if not content:
         return content
     
-    # 匹配markdown图片: ![alt](url)
+    # 匹配markdown图片: ![alt](url "title") 或 ![alt](url)
     def replace_markdown_image(match):
         alt_text = match.group(1)
-        url = match.group(2)
-        local_url = download_image(url, owner, repo)
+        # 提取URL（可能有title，去掉title部分）
+        url_with_title = match.group(2)
+        url = url_with_title.split(' ')[0] if ' ' in url_with_title else url_with_title
+        url = url.split('"')[0] if '"' in url else url
+        url = url.split("'")[0] if "'" in url else url
+        local_url = download_image(url.strip(), owner, repo)
         if local_url:
             return f'![{alt_text}]({local_url})'
         return match.group(0)

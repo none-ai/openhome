@@ -313,6 +313,68 @@ def get_github_contributions(username):
         return cached_data
     return None
 
+# GitHub GraphQL API 获取固定项目（pinned repos）
+def get_github_pinned_repos(username):
+    """使用GitHub GraphQL API获取用户的固定项目"""
+    # 先检查缓存
+    cached_data, cached_time = get_github_cache(f'pinned_{username}')
+    if cached_data and is_cache_valid(cached_time):
+        print(f"Using cached pinned repos for {username}")
+        return cached_data
+
+    url = "https://api.github.com/graphql"
+    token = os.environ.get('GITHUB_TOKEN', '')
+
+    query = """
+    {
+      user(login: "%s") {
+        pinnedItems(first: 6, types: REPOSITORY) {
+          nodes {
+            ... on Repository {
+              name
+              description
+              url
+              stargazerCount
+              primaryLanguage {
+                name
+                color
+              }
+            }
+          }
+        }
+      }
+    }
+    """ % username
+
+    try:
+        if token:
+            headers = {"Authorization": f"Bearer {token}"}
+            response = requests.post(url, json={"query": query}, headers=headers, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                if 'data' in data and data['data'].get('user'):
+                    items = data['data']['user']['pinnedItems']['nodes']
+                    result = [
+                        {
+                            'name': item.get('name', ''),
+                            'description': item.get('description', ''),
+                            'url': item.get('url', ''),
+                            'stars': item.get('stargazerCount', 0),
+                            'language': item.get('primaryLanguage', {}).get('name', ''),
+                            'language_color': item.get('primaryLanguage', {}).get('color', '')
+                        }
+                        for item in items
+                    ]
+                    save_github_cache(f'pinned_{username}', result)
+                    return result
+    except Exception as e:
+        print(f"Error fetching GitHub pinned repos: {e}")
+
+    if cached_data and is_cache_valid(cached_time, retry=True):
+        print(f"Using stale cache for pinned repos {username}")
+        return cached_data
+    return None
+
 # 从头像提取主题色（带智能调整和缓存）
 def get_theme_colors(avatar_url, username=''):
     """从头像图片提取主题色（智能调整 + 缓存）"""
@@ -400,6 +462,7 @@ def index():
     user_info = get_github_user(github_username) if github_username else None
     repos = get_github_repos(github_username) if github_username else []
     contributions = get_github_contributions(github_username) if github_username else None
+    pinned_repos = get_github_pinned_repos(github_username) if github_username else None
     
     # 同步README到本地（启动时同步一次）
     if repos:
@@ -457,6 +520,7 @@ def index():
                          config=config,
                          user_info=user_info,
                          repos=repos,
+                         pinned_repos=pinned_repos,
                          total_stars=total_stars,
                          rss_items=rss_items[:10],
                          theme_colors=theme_colors,

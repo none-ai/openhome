@@ -10,6 +10,7 @@
 - 🌈 **智能主题色**：自动从 GitHub 头像提取并智能调整（避免太淡或太鲜艳）
 - 💾 **颜色缓存**：主题色自动缓存 24 小时，提升加载速度
 - 📊 GitHub 贡献图（heatmap 风格）
+- 📌 展示 GitHub 固定项目（Pinned Repositories）
 - 📦 自动展示 GitHub 公开仓库（按 star 数排序）
 - 📰 博客 RSS 订阅同步
 - ⚙️ 完全配置文件驱动
@@ -159,3 +160,7 @@ openhome/
 - `config.yaml` 已加入 `.gitignore`，不会提交到 Git 仓库
 - `.cache/` 目录已加入 `.gitignore`，不会提交
 - 请使用 `config.example.yaml` 作为模板创建自己的配置
+
+---
+
+作者: stlin256的openclaw

@@ -41,7 +41,8 @@ os.makedirs(CACHE_DIR, exist_ok=True)
 
 # 加载配置
 def load_config():
-    with open('config.yaml', 'r', encoding='utf-8') as f:
+    config_path = os.path.join(os.path.dirname(__file__), 'config.yaml')
+    with open(config_path, 'r', encoding='utf-8') as f:
         return yaml.safe_load(f)
 
 config = load_config()
@@ -444,60 +445,63 @@ def get_github_pinned_repos(username):
 # 从头像提取主题色（带智能调整和缓存）
 def get_theme_colors(avatar_url, username=''):
     """从头像图片提取主题色（智能调整 + 缓存）"""
-    
+
     # 尝试从缓存获取
     if username:
         cached = get_cached_colors(username)
         if cached:
             print(f"Using cached colors for {username}")
             return cached
-    
+
     try:
         # 下载头像
         response = requests.get(avatar_url, timeout=10)
         if response.status_code == 200:
             img_data = BytesIO(response.content)
             color_thief = ColorThief(img_data)
-            
+
             # 获取主色
             dominant_color = color_thief.get_color(quality=1)
             # 获取调色板
             palette = color_thief.get_palette(color_count=5, quality=1)
-            
+
             # 转换RGB为HEX
             def rgb_to_hex(rgb):
                 return '#{:02x}{:02x}{:02x}'.format(rgb[0], rgb[1], rgb[2])
-            
+
             # 智能调整主色
             adjusted_primary = smart_adjust_color(dominant_color)
             adjusted_secondary = smart_adjust_color(palette[1]) if len(palette) > 1 else smart_adjust_color(palette[0])
             adjusted_tertiary = smart_adjust_color(palette[2]) if len(palette) > 2 else adjusted_secondary
-            
+            adjusted_palette = [smart_adjust_color(c) for c in palette] if palette else [adjusted_primary]
+
             colors = {
                 'primary': rgb_to_hex(adjusted_primary),
                 'primary_rgb': adjusted_primary,
                 'secondary': rgb_to_hex(adjusted_secondary),
                 'tertiary': rgb_to_hex(adjusted_tertiary),
                 'gradient_start': rgb_to_hex(adjusted_primary),
-                'gradient_end': rgb_to_hex(adjusted_secondary)
+                'gradient_end': rgb_to_hex(adjusted_secondary),
+                'palette': [rgb_to_hex(c) for c in adjusted_palette]
             }
-            
+
             # 保存到缓存
             if username:
                 save_colors_to_cache(username, colors)
-            
+
             return colors
-            
+
     except Exception as e:
         print(f"Error extracting colors: {e}")
-    
-    # 默认颜色
+
+    # 默认颜色（包含palette）
     return {
         'primary': '#d97706',
         'secondary': '#f59e0b',
         'gradient_start': '#d97706',
         'gradient_end': '#dc2626',
-        'primary_rgb': [217, 119, 6]
+        'primary_rgb': [217, 119, 6],
+        'palette': ['#d97706', '#f59e0b', '#dc2626', '#fbbf24', '#ea580c']
     }
 
 # 解析RSS订阅

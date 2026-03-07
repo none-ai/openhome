@@ -39,6 +39,18 @@ skills:
   - "Node.js"
   - "Docker"
 
+# 常用链接书签（显示在页面上）
+bookmarks:
+  - name: "Google"
+    url: "https://google.com"
+    icon: "🔍"
+  - name: "GitHub"
+    url: "https://github.com"
+    icon: "💻"
+  - name: "Stack Overflow"
+    url: "https://stackoverflow.com"
+    icon: "📚"
+
 # GitHub OAuth 登录配置（可选）
 # 1. 在 GitHub Settings -> Developer settings -> OAuth Apps 创建新应用
 # 2. 设置 Homepage URL 为你的网站地址

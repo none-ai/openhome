@@ -12,11 +12,17 @@ import requests
 import json
 import os
 import time
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, redirect, url_for, session, flash
 from datetime import datetime
+from functools import wraps
 import feedparser
 from io import BytesIO
 from colorthief import ColorThief
+from authlib.integrations.flask_client import OAuth
+
+# Session secret key
+app = Flask(__name__)
+app.secret_key = os.environ.get('SESSION_SECRET', 'dev-secret-key-change-in-production')
 
 # 配置静态文件夹用于README图片
 READMES_DIR = os.path.join(os.path.dirname(__file__), 'readmes')
@@ -41,6 +47,42 @@ def load_config():
         return yaml.safe_load(f)
 
 config = load_config()
+
+# OAuth configuration
+oauth = OAuth(app)
+github = None
+
+# Initialize GitHub OAuth if credentials are provided
+def init_oauth():
+    global github
+    client_id = config.get('oauth', {}).get('github_client_id', '')
+    client_secret = config.get('oauth', {}).get('github_client_secret', '')
+
+    if client_id and client_secret:
+        github = oauth.register(
+            name='github',
+            client_id=client_id,
+            client_secret=client_secret,
+            access_token_url='https://github.com/login/oauth/access_token',
+            authorize_url='https://github.com/login/oauth/authorize',
+            api_base_url='https://api.github.com/',
+            client_kwargs={'scope': 'user:email'},
+        )
+        return True
+    return False
+
+oauth_enabled = init_oauth()
+
+# Login required decorator
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not oauth_enabled:
+            return jsonify({'error': 'OAuth not configured'}), 401
+        if 'user' not in session:
+            return jsonify({'error': 'Not logged in'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
 
 # 缓存管理
 def get_cached_colors(username):
@@ -452,6 +494,64 @@ def parse_rss(feed_url):
         print(f"Error parsing RSS: {e}")
     return []
 
+# OAuth routes
+@app.route('/login')
+def login():
+    """GitHub OAuth login"""
+    if not oauth_enabled:
+        return jsonify({'error': 'OAuth not configured'}), 400
+
+    # Get the callback URL
+    callback_url = url_for('callback', _external=True)
+    return github.authorize_redirect(callback_url)
+
+@app.route('/callback')
+def callback():
+    """GitHub OAuth callback"""
+    if not oauth_enabled:
+        return jsonify({'error': 'OAuth not configured'}), 400
+
+    try:
+        token = github.authorize_access_token()
+        resp = github.get('user')
+        user_data = resp.json()
+
+        # Get user email
+        email_resp = github.get('user/emails')
+        emails = email_resp.json()
+        primary_email = emails[0]['email'] if emails else ''
+
+        # Store user in session
+        session['user'] = {
+            'id': user_data.get('id'),
+            'login': user_data.get('login'),
+            'name': user_data.get('name'),
+            'email': primary_email,
+            'avatar_url': user_data.get('avatar_url'),
+        }
+        session['access_token'] = token.get('access_token')
+
+        flash('Login successful!', 'success')
+    except Exception as e:
+        flash(f'Login failed: {str(e)}', 'error')
+
+    return redirect(url_for('index'))
+
+@app.route('/logout')
+def logout():
+    """Logout"""
+    session.pop('user', None)
+    session.pop('access_token', None)
+    flash('Logged out successfully!', 'success')
+    return redirect(url_for('index'))
+
+@app.route('/api/user')
+def get_user():
+    """Get current logged in user"""
+    if 'user' in session:
+        return jsonify({'status': 'ok', 'user': session['user']})
+    return jsonify({'status': 'ok', 'user': None})
+
 @app.route('/')
 def index():
     github_username = config.get('github_username', '')
@@ -525,7 +625,9 @@ def index():
                          rss_items=rss_items[:10],
                          theme_colors=theme_colors,
                          contributions=contributions,
-                         saved_scheme=saved_scheme)
+                         saved_scheme=saved_scheme,
+                         current_user=session.get('user'),
+                         oauth_enabled=oauth_enabled)
 
 @app.route('/api/repos')
 def api_repos():

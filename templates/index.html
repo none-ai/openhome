@@ -628,11 +628,13 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.7);
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
             overflow: auto;
         }
         .modal-content {
-            background-color: var(--bg-secondary);
+            background-color: rgba(var(--bg-secondary-rgb, 30, 30, 30), 0.95);
             margin: 5% auto;
             padding: 0;
             border-radius: 12px;
@@ -641,14 +643,15 @@
             max-height: 85vh;
             display: flex;
             flex-direction: column;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
         .modal-close {
             color: var(--text-secondary);
-            float: right;
-            font-size: 28px;
+            font-size: 24px;
             font-weight: bold;
-            padding: 15px 20px;
+            padding: 5px 10px;
             cursor: pointer;
+            line-height: 1;
         }
         .modal-close:hover {
             color: var(--accent);
@@ -657,21 +660,22 @@
             padding: 0;
             margin: 0;
             color: var(--text-primary);
-            font-size: 1.25rem;
-            line-height: 1.2;
+            font-size: 1.1rem;
+            line-height: 1.3;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            flex: 1;
         }
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 15px;
+            padding: 8px 12px;
             border-bottom: 1px solid var(--border);
-            background: rgba(128, 128, 128, 0.2);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            background: transparent;
+            min-height: 36px;
+            box-sizing: border-box;
         }
         .modal-body {
             padding: 15px 20px;
@@ -722,9 +726,10 @@
             color: var(--text-secondary);
         }
         .modal-footer {
-            padding: 15px 20px;
+            padding: 8px 12px;
             border-top: 1px solid var(--border);
             text-align: right;
+            background: transparent;
         }
         .modal-btn {
             display: inline-block;

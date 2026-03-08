@@ -12,7 +12,7 @@ import requests
 import json
 import os
 import time
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 from datetime import datetime
 import feedparser
 from io import BytesIO
@@ -345,13 +345,17 @@ def get_theme_colors(avatar_url, username=''):
             adjusted_secondary = smart_adjust_color(palette[1]) if len(palette) > 1 else smart_adjust_color(palette[0])
             adjusted_tertiary = smart_adjust_color(palette[2]) if len(palette) > 2 else adjusted_secondary
             
+            # 构建调色板
+            palette = [rgb_to_hex(c) for c in [adjusted_primary, adjusted_secondary, adjusted_tertiary]]
+            
             colors = {
                 'primary': rgb_to_hex(adjusted_primary),
                 'primary_rgb': adjusted_primary,
                 'secondary': rgb_to_hex(adjusted_secondary),
                 'tertiary': rgb_to_hex(adjusted_tertiary),
                 'gradient_start': rgb_to_hex(adjusted_primary),
-                'gradient_end': rgb_to_hex(adjusted_secondary)
+                'gradient_end': rgb_to_hex(adjusted_secondary),
+                'palette': palette
             }
             
             # 保存到缓存
@@ -369,7 +373,8 @@ def get_theme_colors(avatar_url, username=''):
         'secondary': '#f59e0b',
         'gradient_start': '#d97706',
         'gradient_end': '#dc2626',
-        'primary_rgb': [217, 119, 6]
+        'primary_rgb': [217, 119, 6],
+        'palette': ['#d97706', '#f59e0b', '#dc2626']
     }
 
 # 解析RSS订阅
@@ -420,7 +425,7 @@ def index():
     total_stars = sum(r.get('stargazers_count', 0) for r in repos) if repos else 0
     
     # 提取主题色（带缓存）
-    theme_colors = {'primary': '#d97706', 'secondary': '#f59e0b', 'gradient_start': '#d97706', 'gradient_end': '#dc2626', 'primary_rgb': [217, 119, 6]}
+    theme_colors = {'primary': '#d97706', 'secondary': '#f59e0b', 'gradient_start': '#d97706', 'gradient_end': '#dc2626', 'primary_rgb': [217, 119, 6], 'palette': ['#d97706', '#f59e0b', '#dc2626']}
     if user_info and user_info.get('avatar_url'):
         theme_colors = get_theme_colors(user_info['avatar_url'], github_username)
     
@@ -565,6 +570,25 @@ def get_rss_content(url):
         return jsonify(result)
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
+
+# 统计API
+@app.route("/api/stats")
+def stats_api():
+    from stats import get_stats, record_visit
+    ip = request.remote_addr
+    record_visit(ip)
+    return jsonify({"status": "ok", "stats": get_stats()})
+
+# 评论API
+@app.route("/api/comments", methods=["GET", "POST"])
+def comments_api():
+    from comments import get_comments, add_comment
+    if request.method == "POST":
+        data = request.json
+        add_comment(data.get("name", "匿名"), data.get("content", ""))
+        return jsonify({"status": "ok"})
+    comments = get_comments()
+    return jsonify({"status": "ok", "comments": comments})
 
 if __name__ == '__main__':
     port = config.get('port', 8004)

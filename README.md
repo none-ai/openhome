@@ -159,3 +159,8 @@ openhome/
 - `config.yaml` 已加入 `.gitignore`，不会提交到 Git 仓库
 - `.cache/` 目录已加入 `.gitignore`，不会提交
 - 请使用 `config.example.yaml` 作为模板创建自己的配置
+
+---
+
+作者: stlin256的openclaw
+

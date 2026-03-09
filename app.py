@@ -935,3 +935,48 @@ def trending_api():
         })
     except requests.exceptions.RequestException as e:
         return jsonify({'status': 'error', 'message': str(e)})
+
+# 项目详情 API
+@app.route('/api/repo/<owner>/<repo>')
+def repo_detail_api(owner, repo):
+    """获取仓库详细信息"""
+    github_token = config.get('github_token', '')
+    headers = {'Accept': 'application/vnd.github.v3+json'}
+    if github_token:
+        headers['Authorization'] = f'token {github_token}'
+    
+    url = f'https://api.github.com/repos/{owner}/{repo}'
+    
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        
+        return jsonify({
+            'status': 'ok',
+            'repo': {
+                'name': data.get('name'),
+                'full_name': data.get('full_name'),
+                'description': data.get('description'),
+                'html_url': data.get('html_url'),
+                'stars': data.get('stargazers_count', 0),
+                'forks': data.get('forks_count', 0),
+                'watchers': data.get('watchers_count', 0),
+                'language': data.get('language'),
+                'topics': data.get('topics', [])[:10],
+                'license': data.get('license', {}).get('name'),
+                'size': data.get('size'),
+                'default_branch': data.get('default_branch'),
+                'created_at': data.get('created_at'),
+                'updated_at': data.get('updated_at'),
+                'pushed_at': data.get('pushed_at'),
+                'owner': {
+                    'login': data.get('owner', {}).get('login'),
+                    'avatar_url': data.get('owner', {}).get('avatar_url'),
+                    'html_url': data.get('owner', {}).get('html_url'),
+                    'type': data.get('owner', {}).get('type')
+                }
+            }
+        })
+    except requests.exceptions.RequestException as e:
+        return jsonify({'status': 'error', 'message': str(e)})

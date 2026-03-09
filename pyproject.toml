@@ -5,13 +5,13 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "openhome"
 version = "1.0.0"
-description = "A modern personal homepage with GitHub integration, RSS feeds, and smart theme colors"
+description = "🚀 A modern personal homepage generator with GitHub integration, RSS feeds, and smart theme colors. Build your professional portfolio in minutes!"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "stlin256's OpenClaw", email = "yjzlxljy@outlook.com"}
+    {name = "stlin256", email = "yjzlxljy@outlook.com"}
 ]
-keywords = ["github", "homepage", "personal-site", "rss", "portfolio"]
+keywords = ["github", "homepage", "personal-site", "portfolio", "rss", "developer-portfolio", "github-api", "personal-branding", "profile-page", "static-site"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -22,6 +22,8 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW :: HTML :: HTML Generation",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 requires-python = ">=3.8"
 dependencies = [

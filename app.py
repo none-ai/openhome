@@ -592,13 +592,19 @@ def save_scheme():
 @app.route('/api/readme/<owner>/<repo>')
 def get_readme(owner, repo):
     """获取项目的README（从本地缓存）"""
+    # 速率限制检查
+    ip = request.remote_addr
+    allowed, remaining = check_rate_limit(ip)
+    if not allowed:
+        return jsonify({'status': 'error', 'message': 'Rate limit exceeded. Please try again later.'}), 429
+
     # 导入README同步模块
     try:
         from readme_sync import get_local_readme, sync_readme
-        
+
         # 尝试从本地获取
         local_data = get_local_readme(owner, repo)
-        
+
         if local_data:
             return jsonify({
                 'status': 'ok',
@@ -606,11 +612,11 @@ def get_readme(owner, repo):
                 'html': local_data.get('html', ''),
                 'url': local_data.get('html_url', f'https://github.com/{owner}/{repo}')
             })
-        
+
         # 本地没有则同步一次
         sync_readme(owner, repo)
         local_data = get_local_readme(owner, repo)
-        
+
         if local_data:
             return jsonify({
                 'status': 'ok',
@@ -618,23 +624,29 @@ def get_readme(owner, repo):
                 'html': local_data.get('html', ''),
                 'url': local_data.get('html_url', f'https://github.com/{owner}/{repo}')
             })
-        
+
         return jsonify({'status': 'error', 'message': 'README not found'})
     except Exception as e:
         print(f"Error getting README: {e}")
-        return jsonify({'status': 'error', 'message': str(e)})
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/api/rss/<path:url>')
 def get_rss_content(url):
     """获取RSS文章内容（从缓存）"""
+    # 速率限制检查
+    ip = request.remote_addr
+    allowed, remaining = check_rate_limit(ip)
+    if not allowed:
+        return jsonify({'status': 'error', 'message': 'Rate limit exceeded. Please try again later.'}), 429
+
     import urllib.parse
-    
+
     # 解码URL
     url = urllib.parse.unquote(url)
-    
+
     try:
         from readme_sync import get_rss_cache, fetch_and_cache_rss
-        
+
         # 尝试从缓存获取
         cached = get_rss_cache(url)
         if cached:
@@ -644,31 +656,48 @@ def get_rss_content(url):
                 'html': cached.get('html', ''),
                 'url': url
             })
-        
+
         # 缓存没有则获取并缓存
         result = fetch_and_cache_rss(url)
         return jsonify(result)
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 # 统计API
 @app.route("/api/stats")
 def stats_api():
-    from stats import get_stats, record_visit
+    # 速率限制检查
     ip = request.remote_addr
-    record_visit(ip)
-    return jsonify({"status": "ok", "stats": get_stats()})
+    allowed, remaining = check_rate_limit(ip)
+    if not allowed:
+        return jsonify({'status': 'error', 'message': 'Rate limit exceeded. Please try again later.'}), 429
+
+    try:
+        from stats import get_stats, record_visit
+        record_visit(ip)
+        return jsonify({"status": "ok", "stats": get_stats()})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 # 评论API
 @app.route("/api/comments", methods=["GET", "POST"])
 def comments_api():
-    from comments import get_comments, add_comment
-    if request.method == "POST":
-        data = request.json
-        add_comment(data.get("name", "匿名"), data.get("content", ""))
-        return jsonify({"status": "ok"})
-    comments = get_comments()
-    return jsonify({"status": "ok", "comments": comments})
+    # 速率限制检查
+    ip = request.remote_addr
+    allowed, remaining = check_rate_limit(ip)
+    if not allowed:
+        return jsonify({'status': 'error', 'message': 'Rate limit exceeded. Please try again later.'}), 429
+
+    try:
+        from comments import get_comments, add_comment
+        if request.method == "POST":
+            data = request.json
+            add_comment(data.get("name", "匿名"), data.get("content", ""))
+            return jsonify({"status": "ok"})
+        comments = get_comments()
+        return jsonify({"status": "ok", "comments": comments})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 # 天气API - 使用 Open-Meteo（免费无需API Key）
 @app.route('/api/weather')

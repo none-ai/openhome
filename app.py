@@ -799,6 +799,75 @@ def languages_api():
     
     return jsonify({'status': 'ok', 'languages': lang_list[:8]})
 
+# GitHub 搜索 API
+@app.route('/api/search')
+def search_api():
+    """搜索 GitHub 仓库"""
+    query = request.args.get('q', '').strip()
+    language = request.args.get('language', '')
+    sort = request.args.get('sort', 'stars')
+    order = request.args.get('order', 'desc')
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 10))
+    
+    if not query:
+        return jsonify({'status': 'error', 'message': '搜索关键词不能为空'})
+    
+    # 构建搜索查询
+    search_query = query
+    if language:
+        search_query += f" language:{language}"
+    search_query += " in:name,description,readme"
+    
+    # 获取 GitHub Token
+    github_token = config.get('github_token', '')
+    headers = {'Accept': 'application/vnd.github.v3+json'}
+    if github_token:
+        headers['Authorization'] = f'token {github_token}'
+    
+    # 调用 GitHub 搜索 API
+    url = 'https://api.github.com/search/repositories'
+    params = {
+        'q': search_query,
+        'sort': sort,
+        'order': order,
+        'page': page,
+        'per_page': min(per_page, 30)
+    }
+    
+    try:
+        response = requests.get(url, headers=headers, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        
+        results = []
+        for repo in data.get('items', []):
+            results.append({
+                'name': repo.get('name'),
+                'full_name': repo.get('full_name'),
+                'description': repo.get('description'),
+                'html_url': repo.get('html_url'),
+                'stars': repo.get('stargazers_count', 0),
+                'forks': repo.get('forks_count', 0),
+                'language': repo.get('language'),
+                'owner': {
+                    'login': repo.get('owner', {}).get('login'),
+                    'avatar_url': repo.get('owner', {}).get('avatar_url')
+                },
+                'updated_at': repo.get('updated_at'),
+                'topics': repo.get('topics', [])[:5]
+            })
+        
+        return jsonify({
+            'status': 'ok',
+            'total_count': data.get('total_count', 0),
+            'results': results,
+            'page': page,
+            'per_page': per_page
+        })
+    except requests.exceptions.RequestException as e:
+        return jsonify({'status': 'error', 'message': f'搜索失败: {str(e)}'})
+
 if __name__ == '__main__':
     port = config.get('port', 8004)
     print(f"🚀 启动Claude风格个人主页: http://localhost:{port}")

@@ -872,3 +872,66 @@ if __name__ == '__main__':
     port = config.get('port', 8004)
     print(f"🚀 启动Claude风格个人主页: http://localhost:{port}")
     app.run(host='0.0.0.0', port=port, debug=True)
+
+# 热门仓库 API (在主程序之后定义以便使用 config)
+@app.route('/api/trending')
+def trending_api():
+    """获取热门仓库"""
+    language = request.args.get('language', '')
+    since = request.args.get('since', 'daily')  # daily, weekly, monthly
+    limit = int(request.args.get('limit', 10))
+    
+    # 构建 GitHub 搜索查询
+    date_range = {
+        'daily': 'created:>2026-03-08',
+        'weekly': 'created:>2026-03-02',
+        'monthly': 'created:>2026-02-09'
+    }.get(since, 'created:>2026-03-08')
+    
+    query = f"{date_range} stars:>10"
+    if language:
+        query += f" language:{language}"
+    
+    github_token = config.get('github_token', '')
+    headers = {'Accept': 'application/vnd.github.v3+json'}
+    if github_token:
+        headers['Authorization'] = f'token {github_token}'
+    
+    url = 'https://api.github.com/search/repositories'
+    params = {
+        'q': query,
+        'sort': 'stars',
+        'order': 'desc',
+        'per_page': min(limit, 30)
+    }
+    
+    try:
+        response = requests.get(url, headers=headers, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        
+        results = []
+        for repo in data.get('items', [])[:limit]:
+            results.append({
+                'name': repo.get('name'),
+                'full_name': repo.get('full_name'),
+                'description': repo.get('description'),
+                'html_url': repo.get('html_url'),
+                'stars': repo.get('stargazers_count', 0),
+                'forks': repo.get('forks_count', 0),
+                'language': repo.get('language'),
+                'owner': {
+                    'login': repo.get('owner', {}).get('login'),
+                    'avatar_url': repo.get('owner', {}).get('avatar_url')
+                },
+                'topics': repo.get('topics', [])[:5]
+            })
+        
+        return jsonify({
+            'status': 'ok',
+            'results': results,
+            'language': language,
+            'since': since
+        })
+    except requests.exceptions.RequestException as e:
+        return jsonify({'status': 'error', 'message': str(e)})

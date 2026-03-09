@@ -1,22 +1,19 @@
 import os
-# 代理配置（用于访问GitHub API）- 留空则直连
-os.environ['HTTP_PROXY'] = ''
-os.environ['HTTPS_PROXY'] = ''
-
-"""
-OpenHome - 个人主页
-现代化风格，可配置，支持GitHub信息爬取和RSS订阅
-"""
+import time
+import threading
+from flask import Flask, render_template, jsonify, request
+from datetime import datetime
 import yaml
 import requests
 import json
-import os
-import time
-from flask import Flask, render_template, jsonify, request
-from datetime import datetime
 import feedparser
 from io import BytesIO
 from colorthief import ColorThief
+
+# 速率限制配置
+RATE_LIMIT_DICT = {}  # {ip: [timestamp1, timestamp2, ...]}
+RATE_LIMIT_WINDOW = 60  # 时间窗口（秒）
+RATE_LIMIT_MAX = 30   # 窗口内最大请求数
 
 # 配置静态文件夹用于README图片
 READMES_DIR = os.path.join(os.path.dirname(__file__), 'readmes')
@@ -41,6 +38,24 @@ def load_config():
         return yaml.safe_load(f)
 
 config = load_config()
+
+# 速率限制检查
+def check_rate_limit(ip):
+    """检查IP是否超过速率限制，返回 (是否允许, 剩余请求数)"""
+    now = time.time()
+    if ip not in RATE_LIMIT_DICT:
+        RATE_LIMIT_DICT[ip] = []
+
+    # 清理过期的请求记录
+    RATE_LIMIT_DICT[ip] = [t for t in RATE_LIMIT_DICT[ip] if now - t < RATE_LIMIT_WINDOW]
+
+    # 检查是否超过限制
+    if len(RATE_LIMIT_DICT[ip]) >= RATE_LIMIT_MAX:
+        return False, 0
+
+    # 记录本次请求
+    RATE_LIMIT_DICT[ip].append(now)
+    return True, RATE_LIMIT_MAX - len(RATE_LIMIT_DICT[ip])
 
 # 缓存管理
 def get_cached_colors(username):
@@ -395,6 +410,42 @@ def parse_rss(feed_url):
         print(f"Error parsing RSS: {e}")
     return []
 
+# 健康检查端点
+@app.route('/api/health')
+def health_check():
+    """健康检查端点，返回服务状态"""
+    try:
+        # 检查配置是否加载
+        config_ok = config is not None
+
+        # 检查缓存目录
+        cache_dir_ok = os.path.exists(CACHE_DIR)
+
+        # 检查GitHub缓存
+        github_cache_ok = os.path.exists(GITHUB_CACHE_FILE)
+
+        # 检查主题色缓存
+        colors_cache_ok = os.path.exists(CACHE_FILE)
+
+        status = "healthy" if config_ok and cache_dir_ok else "degraded"
+
+        return jsonify({
+            'status': status,
+            'services': {
+                'config': 'ok' if config_ok else 'error',
+                'cache_dir': 'ok' if cache_dir_ok else 'error',
+                'github_cache': 'ok' if github_cache_ok else 'not_found',
+                'colors_cache': 'ok' if colors_cache_ok else 'not_found'
+            },
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
 @app.route('/')
 def index():
     github_username = config.get('github_username', '')
@@ -470,35 +521,64 @@ def index():
 
 @app.route('/api/repos')
 def api_repos():
-    github_username = config.get('github_username', '')
-    repos = get_github_repos(github_username) if github_username else []
-    return jsonify(repos)
+    # 速率限制检查
+    ip = request.remote_addr
+    allowed, remaining = check_rate_limit(ip)
+    if not allowed:
+        return jsonify({'status': 'error', 'message': 'Rate limit exceeded. Please try again later.'}), 429
+
+    try:
+        github_username = config.get('github_username', '')
+        repos = get_github_repos(github_username) if github_username else []
+        return jsonify({'status': 'ok', 'data': repos})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/api/rss')
 def api_rss():
-    rss_items = []
-    for feed in config.get('rss_feeds', []):
-        items = parse_rss(feed.get('url', ''))
-        for item in items:
-            item['source'] = feed.get('name', '')
-        rss_items.extend(items)
-    return jsonify(rss_items)
+    # 速率限制检查
+    ip = request.remote_addr
+    allowed, remaining = check_rate_limit(ip)
+    if not allowed:
+        return jsonify({'status': 'error', 'message': 'Rate limit exceeded. Please try again later.'}), 429
+
+    try:
+        rss_items = []
+        for feed in config.get('rss_feeds', []):
+            items = parse_rss(feed.get('url', ''))
+            for item in items:
+                item['source'] = feed.get('name', '')
+            rss_items.extend(items)
+        return jsonify({'status': 'ok', 'data': rss_items})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 # 清除缓存API
 @app.route('/api/clear-cache')
 def clear_cache():
     """清除主题色缓存"""
+    # 速率限制检查
+    ip = request.remote_addr
+    allowed, remaining = check_rate_limit(ip)
+    if not allowed:
+        return jsonify({'status': 'error', 'message': 'Rate limit exceeded. Please try again later.'}), 429
+
     try:
         if os.path.exists(CACHE_FILE):
             os.remove(CACHE_FILE)
         return jsonify({'status': 'ok', 'message': 'Cache cleared'})
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/api/save-scheme', methods=['POST'])
 def save_scheme():
     """保存配色方案到服务器"""
-    from flask import request
+    # 速率限制检查
+    ip = request.remote_addr
+    allowed, remaining = check_rate_limit(ip)
+    if not allowed:
+        return jsonify({'status': 'error', 'message': 'Rate limit exceeded. Please try again later.'}), 429
+
     try:
         scheme = request.json.get('scheme', '0')
         scheme_file = os.path.join(os.path.dirname(__file__), '.cache', 'color_scheme.txt')
@@ -507,7 +587,7 @@ def save_scheme():
             f.write(str(scheme))
         return jsonify({'status': 'ok'})
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/api/readme/<owner>/<repo>')
 def get_readme(owner, repo):
@@ -589,6 +669,106 @@ def comments_api():
         return jsonify({"status": "ok"})
     comments = get_comments()
     return jsonify({"status": "ok", "comments": comments})
+
+# 天气API - 使用 Open-Meteo（免费无需API Key）
+@app.route('/api/weather')
+def weather_api():
+    """获取天气信息"""
+    weather_config = config.get('weather', {})
+    if not weather_config.get('enabled', False):
+        return jsonify({'status': 'disabled'})
+    
+    city = weather_config.get('city', 'Shantou')
+    location = weather_config.get('location', 'China')
+    
+    # 城市坐标映射
+    city_coords = {
+        'Shantou': (23.354, 116.681),
+        'Beijing': (39.904, 116.407),
+        'Shanghai': (31.230, 121.474),
+        'Guangzhou': (23.129, 113.264),
+        'Shenzhen': (22.543, 114.058),
+        'Hangzhou': (30.274, 120.155),
+        'Chengdu': (30.572, 104.066),
+        'Xian': (34.341, 108.940),
+    }
+    
+    coords = city_coords.get(city, (23.354, 116.681))  # 默认汕头
+    
+    try:
+        # 使用 Open-Meteo API（免费无需API Key）
+        url = f"https://api.open-meteo.com/v1/forecast"
+        params = {
+            'latitude': coords[0],
+            'longitude': coords[1],
+            'current': 'temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m',
+            'timezone': 'auto'
+        }
+        response = requests.get(url, params=params, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            current = data.get('current', {})
+            
+            # 天气代码映射
+            weather_codes = {
+                0: {'desc': '晴', 'icon': '☀️'},
+                1: {'desc': '晴间多云', 'icon': '⛅'},
+                2: {'desc': '多云', 'icon': '☁️'},
+                3: {'desc': '阴', 'icon': '☁️'},
+                45: {'desc': '雾', 'icon': '🌫️'},
+                48: {'desc': '雾', 'icon': '🌫️'},
+                51: {'desc': '小雨', 'icon': '🌧️'},
+                53: {'desc': '中雨', 'icon': '🌧️'},
+                55: {'desc': '大雨', 'icon': '🌧️'},
+                61: {'desc': '小雨', 'icon': '🌧️'},
+                63: {'desc': '中雨', 'icon': '🌧️'},
+                65: {'desc': '大雨', 'icon': '🌧️'},
+                71: {'desc': '小雪', 'icon': '❄️'},
+                73: {'desc': '中雪', 'icon': '❄️'},
+                75: {'desc': '大雪', 'icon': '❄️'},
+                80: {'desc': '阵雨', 'icon': '🌦️'},
+                81: {'desc': '阵雨', 'icon': '🌦️'},
+                82: {'desc': '强阵雨', 'icon': '⛈️'},
+                95: {'desc': '雷暴', 'icon': '⛈️'},
+                96: {'desc': '雷暴', 'icon': '⛈️'},
+                99: {'desc': '雷暴', 'icon': '⛈️'},
+            }
+            
+            code = current.get('weather_code', 0)
+            weather_info = weather_codes.get(code, {'desc': '未知', 'icon': '🌡️'})
+            
+            return jsonify({
+                'status': 'ok',
+                'city': city,
+                'temperature': current.get('temperature_2m', 0),
+                'weather': weather_info['desc'],
+                'icon': weather_info['icon'],
+                'humidity': current.get('relative_humidity_2m', 0),
+                'wind_speed': current.get('wind_speed_10m', 0),
+            })
+    except Exception as e:
+        print(f"Error fetching weather: {e}")
+    
+    return jsonify({'status': 'error', 'message': str(e)})
+
+# 获取语言统计
+@app.route('/api/languages')
+def languages_api():
+    """获取仓库语言分布"""
+    github_username = config.get('github_username', '')
+    repos = get_github_repos(github_username) if github_username else []
+    
+    languages = {}
+    for repo in repos:
+        lang = repo.get('language', 'Other')
+        if lang:
+            languages[lang] = languages.get(lang, 0) + 1
+    
+    # 转换为列表格式
+    lang_list = [{'name': k, 'count': v} for k, v in languages.items()]
+    lang_list.sort(key=lambda x: x['count'], reverse=True)
+    
+    return jsonify({'status': 'ok', 'languages': lang_list[:8]})
 
 if __name__ == '__main__':
     port = config.get('port', 8004)

@@ -8,14 +8,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* Animations */
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        
         :root {
             --bg-primary: #0a0a0a;
             --bg-secondary: #141414;
@@ -152,22 +144,6 @@
             font-size: 0.85rem;
             margin-top: 0.25rem;
         }
-
-        /* Language Chart */
-        .language-chart { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
-        .language-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.8rem; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 20px; font-size: 0.85rem; transition: all 0.3s; }
-        .language-item:hover { border-color: var(--accent); transform: scale(1.02); }
-        .language-color { width: 12px; height: 12px; border-radius: 50%; }
-
-        /* Timeline */
-        .timeline { position: relative; padding-left: 2rem; }
-        .timeline::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom, var(--accent), var(--border)); border-radius: 2px; }
-        .timeline-item { position: relative; padding: 1rem 1.5rem; margin-bottom: 1rem; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; transition: all 0.3s; }
-        .timeline-item:hover { border-color: var(--accent); transform: translateX(5px); box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
-        .timeline-item::before { content: ''; position: absolute; left: -2rem; top: 1.5rem; width: 12px; height: 12px; background: var(--accent); border-radius: 50%; border: 3px solid var(--bg-primary); }
-        .timeline-date { font-size: 0.8rem; color: var(--accent); font-weight: 500; margin-bottom: 0.25rem; }
-        .timeline-title { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem; }
-        .timeline-desc { font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem; }
 
         /* Sections */
         section {
@@ -524,17 +500,6 @@
                     title="配色{{ loop.index }}"></button>
                 {% endfor %}
             </div>
-            <!-- Weather Widget -->
-            {% if config.weather and config.weather.enabled %}
-            <div class="weather-widget" id="weatherWidget" onclick="refreshWeather()" style="display:inline-flex;align-items:center;gap:0.75rem;padding:0.5rem 1rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius:50px;margin-top:1rem;font-size:0.9rem;cursor:pointer;transition:all 0.3s;">
-                <span class="weather-icon" id="weatherIcon" style="font-size:1.5rem;">🌡️</span>
-                <div class="weather-info" style="display:flex;flex-direction:column;line-height:1.3;">
-                    <span class="weather-temp" id="weatherTemp" style="font-weight:600;color:var(--text-primary);">--°C</span>
-                    <span class="weather-desc" id="weatherDesc" style="font-size:0.75rem;color:var(--text-muted);">加载中...</span>
-                </div>
-            </div>
-            <style>.weather-widget:hover{border-color:var(--accent);transform:scale(1.05);}</style>
-            {% endif %}
         </header>
 
         <!-- GitHub Stats -->
@@ -553,29 +518,6 @@
                 <div class="stat-label">Followers</div>
             </div>
         </div>
-        {% endif %}
-
-        <!-- Language Chart -->
-        {% if config.stats and config.stats.show_language_chart %}
-        <div class="language-chart" id="languageChart" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:1rem;">
-            <div class="loading" style="text-align:center;padding:1rem;color:var(--text-muted);">加载语言分布...</div>
-        </div>
-        {% endif %}
-
-        <!-- Timeline -->
-        {% if config.timeline and config.timeline.enabled and config.timeline.events %}
-        <section>
-            <h2 class="section-title">里程碑 Timeline</h2>
-            <div class="timeline">
-                {% for event in config.timeline.events %}
-                <div class="timeline-item">
-                    <div class="timeline-date">{{ event.date }}</div>
-                    <div class="timeline-title">{% if event.icon %}<span>{{ event.icon }}</span>{% endif %}{{ event.title }}</div>
-                    {% if event.description %}<div class="timeline-desc">{{ event.description }}</div>{% endif %}
-                </div>
-                {% endfor %}
-            </div>
-        </section>
         {% endif %}
 
         <!-- GitHub Contributions -->
@@ -936,38 +878,6 @@
         });
         
         initTheme();
-        
-        // Weather Widget
-        function loadWeather() {
-            fetch('/api/weather').then(r => r.json()).then(d => {
-                if (d.status === 'ok') {
-                    document.getElementById('weatherIcon').textContent = d.icon;
-                    document.getElementById('weatherTemp').textContent = d.temperature + '°C';
-                    document.getElementById('weatherDesc').textContent = d.city + ' · ' + d.weather;
-                } else if (d.status === 'disabled') {
-                    document.getElementById('weatherWidget').style.display = 'none';
-                }
-            }).catch(() => {
-                document.getElementById('weatherDesc').textContent = '加载失败';
-            });
-        }
-        function refreshWeather() { loadWeather(); }
-        if (document.getElementById('weatherWidget')) loadWeather();
-        
-        // Language Chart
-        function loadLanguages() {
-            fetch('/api/languages').then(r => r.json()).then(d => {
-                if (d.status === 'ok' && d.languages.length > 0) {
-                    const colors = ['#f1e05a', '#3572A5', '#b07214', '#563d7c', '#e34c26', '#83b518', '#2b7489', '#4F5D95'];
-                    let html = '';
-                    d.languages.forEach((lang, i) => {
-                        html += '<div class="language-item" style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0.8rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius:20px;font-size:0.85rem;transition:all 0.3s;"><span class="language-color" style="width:12px;height:12px;border-radius:50%;background:' + colors[i % colors.length] + '"></span>' + lang.name + ' (' + lang.count + ')</div>';
-                    });
-                    document.getElementById('languageChart').innerHTML = html;
-                }
-            }).catch(() => {});
-        }
-        if (document.getElementById('languageChart')) loadLanguages();
         
         // Scroll contribution grid to right (latest)
         const contribGrid = document.querySelector('.contribution-grid');

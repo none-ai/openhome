@@ -885,5 +885,63 @@
             contribGrid.scrollLeft = contribGrid.scrollWidth;
         }
     </script>
+
+    <!-- 评论区域 -->
+    <div class="comments-section" style="margin-top:40px;padding:20px;background:rgba(255,255,255,0.05);border-radius:10px;">
+        <h3 style="color:var(--accent-color);margin-bottom:15px;">💬 留言板</h3>
+        <div style="margin-bottom:15px;">
+            <input type="text" id="commentName" placeholder="你的名字" id="commentName"<input type="hidden" id="commentContent" value="">
+<style>
+.emoji-picker { display:flex; gap:5px; margin-bottom:10px; }
+.emoji-btn { cursor:pointer; font-size:20px; opacity:0.7; }
+.emoji-btn:hover { opacity:1; transform:scale(1.2); }
+</style>
+<div class="emoji-picker">
+<span class="emoji-btn" onclick="addEmoji('👍')">👍</span>
+<span class="emoji-btn" onclick="addEmoji('❤️')">❤️</span>
+<span class="emoji-btn" onclick="addEmoji('😊')">😊</span>
+<span class="emoji-btn" onclick="addEmoji('🎉')">🎉</span>
+<span class="emoji-btn" onclick="addEmoji('💡')">💡</span>
+</div>
+<script>
+function addEmoji(e) {
+    const input = document.getElementById("commentContent");
+    input.value = input.value + e;
+    input.focus();
+}
+</script>
+ style="padding:8px;margin-right:10px;border-radius:5px;border:1px solid #333;background:#1a1a2e;color:#fff;width:120px;">
+            <button onclick="submitComment()" style="padding:8px 20px;background:var(--accent-color);border:none;border-radius:5px;cursor:pointer;color:#000;">提交</button>
+        </div>
+        <div id="commentsList"></div>
+    </div>
+    <script>
+        function loadComments() {
+            fetch("/api/comments").then(r=>r.json()).then(d=>{
+                if(d.status==="ok"){
+                    let html="";
+                    d.comments.forEach(c=>{
+                        html+=`<div style="padding:10px;margin:5px 0;background:rgba(0,0,0,0.2);border-radius:5px;">
+                            <strong style="color:var(--accent-color)">${c.name}</strong>
+                            <span style="color:#666;font-size:12px;">${c.created}</span>
+                            <p style="margin:5px 0">${c.content}</p>
+                        </div>`;
+                    });
+                    document.getElementById("commentsList").innerHTML=html||"<p style='color:#666'>暂无留言</p>";
+                }
+            });
+        }
+        function submitComment(){
+            const name=document.getElementById("commentName").value||"匿名";
+            const content=document.getElementById("commentContent").value || prompt("留言内容:");
+            if(content){
+                fetch("/api/comments",{method:"POST",headers:{"Content-Type":"application/json"},
+                    body:JSON.stringify({name,content})}).then(r=>r.json()).then(d=>{
+                    if(d.status==="ok")loadComments();
+                });
+            }
+        }
+        loadComments();
+    </script>
 </body>
 </html>

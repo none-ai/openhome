@@ -14,6 +14,11 @@ from colorthief import ColorThief
 RATE_LIMIT_DICT = {}  # {ip: [timestamp1, timestamp2, ...]}
 RATE_LIMIT_WINDOW = 60  # 时间窗口（秒）
 RATE_LIMIT_MAX = 30   # 窗口内最大请求数
+rate_limit_lock = threading.Lock()  # 线程锁保护速率限制字典
+
+# 后台同步状态标志
+_sync_started = False  # 标记是否已启动过README同步
+sync_lock = threading.Lock()  # 同步线程锁
 
 # 配置静态文件夹用于README图片
 READMES_DIR = os.path.join(os.path.dirname(__file__), 'readmes')
@@ -34,28 +39,53 @@ os.makedirs(CACHE_DIR, exist_ok=True)
 
 # 加载配置
 def load_config():
-    with open('config.yaml', 'r', encoding='utf-8') as f:
-        return yaml.safe_load(f)
+    """加载配置文件，带错误处理"""
+    config_path = 'config.yaml'
+    default_config = {
+        'github_username': '',
+        'github_token': '',
+        'rss_feeds': [],
+        'port': 8004
+    }
+
+    if not os.path.exists(config_path):
+        print(f"警告: 配置文件 {config_path} 不存在，使用默认配置")
+        return default_config
+
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+            # 合并默认配置，确保必要字段存在
+            if config is None:
+                config = {}
+            return {**default_config, **config}
+    except yaml.YAMLError as e:
+        print(f"错误: 配置文件格式不正确: {e}")
+        return default_config
+    except IOError as e:
+        print(f"错误: 无法读取配置文件: {e}")
+        return default_config
 
 config = load_config()
 
 # 速率限制检查
 def check_rate_limit(ip):
     """检查IP是否超过速率限制，返回 (是否允许, 剩余请求数)"""
-    now = time.time()
-    if ip not in RATE_LIMIT_DICT:
-        RATE_LIMIT_DICT[ip] = []
+    with rate_limit_lock:
+        now = time.time()
+        if ip not in RATE_LIMIT_DICT:
+            RATE_LIMIT_DICT[ip] = []
 
-    # 清理过期的请求记录
-    RATE_LIMIT_DICT[ip] = [t for t in RATE_LIMIT_DICT[ip] if now - t < RATE_LIMIT_WINDOW]
+        # 清理过期的请求记录
+        RATE_LIMIT_DICT[ip] = [t for t in RATE_LIMIT_DICT[ip] if now - t < RATE_LIMIT_WINDOW]
 
-    # 检查是否超过限制
-    if len(RATE_LIMIT_DICT[ip]) >= RATE_LIMIT_MAX:
-        return False, 0
+        # 检查是否超过限制
+        if len(RATE_LIMIT_DICT[ip]) >= RATE_LIMIT_MAX:
+            return False, 0
 
-    # 记录本次请求
-    RATE_LIMIT_DICT[ip].append(now)
-    return True, RATE_LIMIT_MAX - len(RATE_LIMIT_DICT[ip])
+        # 记录本次请求
+        RATE_LIMIT_DICT[ip].append(now)
+        return True, RATE_LIMIT_MAX - len(RATE_LIMIT_DICT[ip])
 
 # 缓存管理
 def get_cached_colors(username):
@@ -457,20 +487,23 @@ def index():
     repos = get_github_repos(github_username) if github_username else []
     contributions = get_github_contributions(github_username) if github_username else None
     
-    # 同步README到本地（启动时同步一次）
-    if repos:
-        try:
-            from readme_sync import sync_all_readmes, start_sync_scheduler
-            import threading
-            # 后台同步（不阻塞页面加载）
-            def background_sync():
-                import time
-                time.sleep(5)  # 等待页面加载完成后再同步
-                sync_all_readmes(repos)
-                start_sync_scheduler(repos)
-            threading.Thread(target=background_sync, daemon=True).start()
-        except Exception as e:
-            print(f"README同步出错: {e}")
+    # 同步README到本地（仅启动时同步一次，使用锁防止重复启动）
+    global _sync_started
+    if repos and not _sync_started:
+        with sync_lock:
+            if not _sync_started:  # 双重检查
+                _sync_started = True
+                try:
+                    from readme_sync import sync_all_readmes, start_sync_scheduler
+                    # 后台同步（不阻塞页面加载）
+                    def background_sync():
+                        import time
+                        time.sleep(5)  # 等待页面加载完成后再同步
+                        sync_all_readmes(repos)
+                        start_sync_scheduler(repos)
+                    threading.Thread(target=background_sync, daemon=True).start()
+                except Exception as e:
+                    print(f"README同步出错: {e}")
     
     # 计算总star数
     total_stars = sum(r.get('stargazers_count', 0) for r in repos) if repos else 0
@@ -870,8 +903,9 @@ def search_api():
 
 if __name__ == '__main__':
     port = config.get('port', 8004)
+    debug_mode = config.get('debug', False)
     print(f"🚀 启动Claude风格个人主页: http://localhost:{port}")
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
 
 # 热门仓库 API (在主程序之后定义以便使用 config)
 @app.route('/api/trending')

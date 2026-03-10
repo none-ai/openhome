@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD041 -->
 <div align="center">
 
 <picture>
@@ -6,59 +7,59 @@
   <img alt="OpenHome" src="https://img.shields.io/badge/OpenHome-6366f1?style=for-the-badge">
 </picture>
 
-# 🎯 OpenHome | 现代化个人主页生成器
+# 🎯 OpenHome | Modern Personal Homepage Generator
 
-✨ **一款让开发者爱不释手的个人主页** · 🚀 **开箱即用** · 📱 **响应式设计**
+✨ **A personal homepage developers will love** · 🚀 **Out of the box** · 📱 **Responsive design**
 
-![GitHub stars](https://img.shields.io/github/stars/none-ai/openhome?style=for-the-badge&color=fbbf24&labelColor=292524)
-![GitHub forks](https://img.shields.io/github/forks/none-ai/openhome?style=for-the-badge&color=60a5fa&labelColor=292524)
-![GitHub watchers](https://img.shields.io/github/watchers/none-ai/openhome?style=for-the-badge&color=a78bfa&labelColor=292524)
-![GitHub issues](https://img.shields.io/github/issues/none-ai/openhome?style=for-the-badge&color=f87171&labelColor=292524)
-![GitHub license](https://img.shields.io/github/license/none-ai/openhome?style=for-the-badge&color=22c55e&labelColor=292524)
-![PyPI version](https://img.shields.io/pypi/v/openhome?style=for-the-badge&color=3b82f6)
-![PyPI downloads](https://img.shields.io/pypi/dm/openhome?style=for-the-badge&color=8b5cf6)
-![Python version](https://img.shields.io/badge/python-3.8+-blue?style=for-the-badge)
-![Last commit](https://img.shields.io/github/last-commit/none-ai/openhome/main?style=for-the-badge&color=34d399)
-![Contributors](https://img.shields.io/github/contributors/none-ai/openhome?style=for-the-badge&color=ec4899)
-![Commit activity](https://img.shields.io/github/commit-activity/m/none-ai/openhome?style=for-the-badge&color=10b981)
+[![GitHub stars](https://img.shields.io/github/stars/none-ai/openhome?style=for-the-badge&color=fbbf24&labelColor=292524)](https://github.com/none-ai/openhome/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/none-ai/openhome?style=for-the-badge&color=60a5fa&labelColor=292524)
+[![GitHub watchers](https://img.shields.io/github/watchers/none-ai/openhome?style=for-the-badge&color=a78bfa&labelColor=292524)
+[![GitHub issues](https://img.shields.io/github/issues/none-ai/openhome?style=for-the-badge&color=f87171&labelColor=292524)
+[![GitHub license](https://img.shields.io/github/license/none-ai/openhome?style=for-the-badge&color=22c55e&labelColor=292524)
+[![PyPI version](https://img.shields.io/pypi/v/openhome?style=for-the-badge&color=3b82f6)
+[![PyPI downloads](https://img.shields.io/pypi/dm/openhome?style=for-the-badge&color=8b5cf6)
+[![Python version](https://img.shields.io/badge/python-3.8+-blue?style=for-the-badge)
+[![Last commit](https://img.shields.io/github/last-commit/none-ai/openhome/main?style=for-the-badge&color=34d399)
+[![Contributors](https://img.shields.io/github/contributors/none-ai/openhome?style=for-the-badge&color=ec4899)
+[![Commit activity](https://img.shields.io/github/commit-activity/m/none-ai/openhome?style=for-the-badge&color=10b981)
 
 ---
 
-[📖 文档](https://github.com/none-ai/openhome#-安装方式) ·
-[🚀 快速开始](#-快速开始) ·
-[💬 讨论](https://github.com/none-ai/openhome/discussions) ·
-[🐛 问题反馈](https://github.com/none-ai/openhome/issues) ·
-[❤️ 赞助](https://github.com/sponsors/none-ai)
+[📖 Documentation](https://github.com/none-ai/openhome#-installation) ·
+[🚀 Quick Start](#-quick-start) ·
+[💬 Discussion](https://github.com/none-ai/openhome/discussions) ·
+[🐛 Issues](https://github.com/none-ai/openhome/issues) ·
+[❤️ Sponsor](https://github.com/sponsors/none-ai)
 
 </div>
 
 ---
 
-## 📸 效果预览
+## 📸 Screenshot
 
 ![Screenshot](https://raw.githubusercontent.com/none-ai/openhome/main/screenshot.jpg)
 
 ---
 
-## 🏗️ 系统架构
+## 🏗️ Architecture
 
 ```mermaid
 graph TB
-    subgraph Client["🌐 客户端层"]
-        C1[📱 移动端]
-        C2[💻 桌面端]
-        C3[📋 平板端]
+    subgraph Client["🌐 Client Layer"]
+        C1[📱 Mobile]
+        C2[💻 Desktop]
+        C3[📋 Tablet]
     end
     
-    subgraph Server["🚀 OpenHome 服务"]
+    subgraph Server["🚀 OpenHome Service"]
         WS[🔌 Web Server<br/>Flask/FastAPI]
-        TH[🎨 主题引擎<br/>Theme Engine]
-        RC[⚡ 缓存层<br/>Redis/Memory]
+        TH[🎨 Theme Engine]
+        RC[⚡ Cache Layer<br/>Redis/Memory]
         RH[📥 GitHub API<br/>Request Handler]
-        RR[📰 RSS 解析器]
+        RR[📰 RSS Parser]
     end
     
-    subgraph External["🌍 外部服务"]
+    subgraph External["🌍 External Services"]
         GH[👤 GitHub API]
         RSS[📡 RSS Feed]
         AV[🖼️ Avatar Service]
@@ -76,7 +77,7 @@ graph TB
     TH --> AV
 ```
 
-### 🔄 数据流架构
+### 🔄 Data Flow
 
 ```mermaid
 sequenceDiagram
@@ -86,82 +87,82 @@ sequenceDiagram
     participant GitHub
     participant RSS
     
-    User->>Server: 访问主页
-    Server->>Cache: 检查缓存
-    alt 缓存命中
-        Cache-->>Server: 返回缓存数据
-    else 缓存未命中
-        Server->>GitHub: 请求用户数据
-        Server->>GitHub: 请求仓库列表
-        Server->>GitHub: 请求贡献数据
-        Server->>RSS: 获取博客更新
-        GitHub-->>Server: 返回数据
-        RSS-->>Server: 返回订阅内容
-        Server->>Cache: 缓存数据
+    User->>Server: Visit homepage
+    Server->>Cache: Check cache
+    alt Cache hit
+        Cache-->>Server: Return cached data
+    else Cache miss
+        Server->>GitHub: Fetch user data
+        Server->>GitHub: Fetch repo list
+        Server->>GitHub: Fetch contribution data
+        Server->>RSS: Get blog updates
+        GitHub-->>Server: Return data
+        RSS-->>Server: Return feed content
+        Server->>Cache: Cache data
     end
-    Server-->>User: 渲染主页
+    Server-->>User: Render homepage
 ```
 
-### 🎨 主题提取流程
+### 🎨 Theme Extraction Flow
 
 ```mermaid
 flowchart LR
-    A[🖼️ 头像图片] --> B[🎯 颜色提取]
-    B --> C{📊 颜色分析}
-    C -->|饱和度<40%| D[📈 增强饱和度]
-    C -->|饱和度>80%| E[📉 降低饱和度]
-    C -->|亮度<30%| F[☀️ 提升亮度]
-    C -->|亮度>70%| G[🌙 降低亮度]
-    D --> H[💾 缓存24小时]
+    A[🖼️ Avatar Image] --> B[🎯 Color Extraction]
+    B --> C{📊 Color Analysis}
+    C -->|Saturation<40%| D[📈 Enhance Saturation]
+    C -->|Saturation>80%| E[📉 Reduce Saturation]
+    C -->|Brightness<30%| F[☀️ Increase Brightness]
+    C -->|Brightness>70%| G[🌙 Decrease Brightness]
+    D --> H[💾 Cache 24 Hours]
     E --> H
     F --> H
     G --> H
-    H --> I[🎨 应用主题色]
+    H --> I[🎨 Apply Theme Colors]
 ```
 
 ---
 
-## ⭐ 为什么选择 OpenHome？
+## ⭐ Why OpenHome?
 
-| 特性 | 说明 |
-|------|------|
-| 🚀 **开箱即用** | 一句话配置，立即拥有专业个人主页 |
-| 🎨 **智能主题色** | 自动从头像提取主题色，永远和谐统一 |
-| ⚡ **极速加载** | 颜色缓存24小时，GitHub API优化 |
-| 📱 **响应式设计** | 手机、平板、桌面完美适配 |
-| 🔧 **完全可定制** | YAML配置，想要的都能实现 |
-| 🆓 **免费开源** | MIT协议，永久免费 |
-
----
-
-## 🏆 核心功能
-
-### 1. 智能主题色 🎨
-自动从你的 GitHub 头像提取主色调，智能调整饱和度和亮度，让页面永远保持视觉和谐。再也不必纠结配色方案！
-
-### 2. GitHub 数据展示 📊
-- 公开仓库按 Star 数排序展示
-- 贡献热力图（Heatmap）
-- 一键查看项目详情
-
-### 3. RSS 订阅聚合 📰
-支持多个 RSS 源，一个页面展示你的所有博客更新。读者无需四处寻找，自动聚合！
-
-### 4. 完整社交链接 🔗
-GitHub、邮箱、Twitter、博客...一个页面展示所有社交入口。
+| Feature | Description |
+|---------|-------------|
+| 🚀 **Out of the Box** | One-line config, get your professional homepage instantly |
+| 🎨 **Smart Theme Colors** | Auto-extract colors from avatar, always harmonious |
+| ⚡ **Fast Loading** | Color cache 24 hours, GitHub API optimized |
+| 📱 **Responsive** | Perfect on mobile, tablet, and desktop |
+| 🔧 **Fully Customizable** | YAML config, anything is possible |
+| 🆓 **Free & Open Source** | MIT license, forever free |
 
 ---
 
-## 📦 安装方式
+## 🏆 Core Features
 
-### 方式一：pip 安装（推荐）
+### 1. Smart Theme Colors 🎨
+Automatically extracts dominant colors from your GitHub avatar with intelligent saturation and brightness adjustments, keeping your page visually harmonious. No more worrying about color schemes!
+
+### 2. GitHub Data Display 📊
+- Public repos sorted by stars
+- Contribution heatmap
+- One-click repo details
+
+### 3. RSS Feed Aggregation 📰
+Multiple RSS sources, one page displaying all your blog updates. No more searching around!
+
+### 4. Complete Social Links 🔗
+GitHub, email, Twitter, blog... all social entries in one page.
+
+---
+
+## 📦 Installation
+
+### Option 1: pip (Recommended)
 
 ```bash
 pip install openhome
 openhome
 ```
 
-### 方式二：源码运行
+### Option 2: From Source
 
 ```bash
 git clone https://github.com/none-ai/openhome.git
@@ -170,226 +171,225 @@ pip install -r requirements.txt
 python app.py
 ```
 
-### 方式三：一句话配置
+### Option 3: One-Line Setup
 
 ```bash
-# 只需一行命令，自动生成配置
-python setup.py --github 你的GitHub用户名
+# Just one command, auto-generate config
+python setup.py --github your-github-username
 python app.py
 ```
 
 ---
 
-## ⚡ 快速开始
+## ⚡ Quick Start
 
-### 1. 配置
+### 1. Configure
 
-复制示例配置文件：
+Copy the example config file:
 
 ```bash
 cp config.example.yaml config.yaml
 ```
 
-编辑 `config.yaml`，修改以下内容：
+Edit `config.yaml`:
 
 ```yaml
-# GitHub用户名
+# GitHub username
 github_username: "your-github-username"
 
-# GitHub Token（可选，用于提高API调用限制）
+# GitHub Token (optional, for higher API rate limits)
 github_token: "ghp_xxxxxxxxxxxxxxxxxxxx"
 
-# 端口号
+# Port number
 port: 8004
 
-# RSS订阅
+# RSS feeds
 rss_feeds:
   - url: "https://your-blog.com/feed.xml"
-    name: "我的博客"
+    name: "My Blog"
 
-# 个人简介
+# Bio
 bio:
   name: "Your Name"
   title: "Developer"
   description: "Hello, I'm a developer."
 
-# 社交链接
+# Social links
 social:
   github: "your-github-username"
   email: "you@example.com"
 ```
 
-### 2. 运行
+### 2. Run
 
 ```bash
 python app.py
 ```
 
-打开浏览器访问 http://localhost:8004
+Open http://localhost:8004 in your browser.
 
 ---
 
-## 🎯 一句话配置
+## 🎯 One-Line Setup
 
-不想手动编辑配置文件？一行命令搞定！
+Don't want to manually edit config? One command搞定!
 
 ```bash
-python setup.py --github stlin256 --name "张三" --title "全栈工程师"
+python setup.py --github stlin256 --name "John Doe" --title "Full Stack Engineer"
 ```
 
-更多选项：
+More options:
 
 ```bash
 python setup.py --github stlin256 \
   --port 9000 \
-  --name "你的名字" \
-  --title "开发者" \
-  --description "你好，我是开发者" \
+  --name "Your Name" \
+  --title "Developer" \
+  --description "Hello, I'm a developer" \
   --email "you@example.com"
 ```
 
 ---
 
-## 🔑 GitHub Token 配置
+## 🔑 GitHub Token
 
-### 为什么需要 Token？
+### Why Token?
 
-- 无 Token：每小时 **60 次**请求限制
-- 有 Token：每小时 **5000 次**请求限制
+- **Without Token**: 60 requests/hour limit
+- **With Token**: 5000 requests/hour limit
 
-### 如何生成 Token？
+### How to Generate?
 
-1. 登录 GitHub
-2. 进入 Settings → Developer settings → Personal access tokens → Tokens (classic)
-3. 点击 "Generate new token (classic)"
-4. 勾选 `repo` 权限
-5. 生成后将 Token 添加到 `config.yaml`
+1. Login to GitHub
+2. Go to Settings → Developer settings → Personal access tokens → Tokens (classic)
+3. Click "Generate new token (classic)"
+4. Select `repo` permission
+5. Add the generated token to `config.yaml`
 
-### 注意
+### Note
 
-- Token 保存在 `config.yaml` 中，该文件已加入 `.gitignore`，**不会提交到 Git**
-- 如果不配置 Token，GitHub API 有每小时 60 次请求限制
+- Token is stored in `config.yaml`, which is in `.gitignore` and won't be committed
+- Without token, GitHub API has 60 requests/hour limit
 
 ---
 
-## 🎨 智能主题色
+## 🎨 Smart Theme Colors
 
-### 工作原理
+### How It Works
 
-1. **自动提取**：从 GitHub 头像图片中提取主色调
-2. **智能调整**：
-   - 饱和度控制在 40%-80%（避免太淡或太鲜艳）
-   - 亮度控制在 30%-70%（避免太暗或太亮）
-3. **缓存机制**：颜色信息缓存 24 小时，避免重复提取
+1. **Auto-extraction**: Extracts dominant color from GitHub avatar
+2. **Intelligent Adjustment**:
+   - Saturation: 40%-80% (avoid too dull or too vivid)
+   - Brightness: 30%-70% (avoid too dark or too bright)
+3. **Caching**: Colors cached for 24 hours
 
-### 手动清除缓存
+### Clear Cache Manually
 
-如需重新提取头像颜色，可访问：
-
+Visit:
 ```
 http://localhost:8004/api/clear-cache
 ```
 
-或删除 `.cache/theme_colors.json` 文件后重启服务。
+Or delete `.cache/theme_colors.json` and restart.
 
 ---
 
-## 🔄 工作原理
+## 🔄 How It Works
 
 ```mermaid
 graph TB
     subgraph OpenHome_System
-        A[🚀 启动应用] --> B[📥 获取GitHub数据]
-        B --> C[🎨 提取头像主题色]
-        C --> D[📰 解析RSS订阅]
-        D --> E[⚡ 缓存优化]
-        E --> F[🌐 渲染主页]
+        A[🚀 Start App] --> B[📥 Fetch GitHub Data]
+        B --> C[🎨 Extract Avatar Theme]
+        C --> D[📰 Parse RSS Feeds]
+        D --> E[⚡ Cache Optimization]
+        E --> F[🌐 Render Homepage]
     end
     
-    subgraph 数据源
+    subgraph Data_Sources
         G[👤 GitHub API] -.-> B
-        H[📡 RSS 源] -.-> D
-        I[🖼️ 头像图片] -.-> C
+        H[📡 RSS Sources] -.-> D
+        I[🖼️ Avatar Image] -.-> C
     end
 ```
 
-## 📁 项目结构
+## 📁 Project Structure
 
 ```
 openhome/
-├── app.py              # 主程序
-├── setup.py            # 一句话配置工具
-├── config.yaml         # 配置文件（不提交到 Git）
-├── config.example.yaml # 配置示例
-├── pyproject.toml      # pip 安装配置
-├── requirements.txt    # Python 依赖
-├── README.md           # 中文说明
-├── README-en.md        # English Docs
-├── CONTRIBUTING.md    # 贡献指南
-├── CODE_OF_CONDUCT.md # 行为准则
-├── LICENSE            # MIT 许可证
-├── .gitignore         # Git 忽略配置
-├── .cache/            # 缓存目录（自动生成）
+├── app.py              # Main application
+├── setup.py           # One-line setup tool
+├── config.yaml        # Configuration (not committed)
+├── config.example.yaml# Example config
+├── pyproject.toml     # pip install config
+├── requirements.txt   # Python dependencies
+├── README.md          # English documentation
+├── README-cn.md       # 中文文档
+├── CONTRIBUTING.md   # Contributing guide
+├── CODE_OF_CONDUCT.md# Code of conduct
+├── LICENSE           # MIT License
+├── .gitignore        # Git ignore rules
+├── .cache/           # Cache directory (auto-generated)
 ├── templates/
-│   └── index.html     # 主页模板
+│   └── index.html    # Main template
 └── static/
-    └── avatar.png     # 头像（可选）
+    └── avatar.png    # Avatar (optional)
 ```
 
 ---
 
-## ⚙️ 配置说明
+## ⚙️ Configuration Reference
 
-| 配置项 | 说明 | 必填 |
-|--------|------|------|
-| `github_username` | GitHub 用户名 | ✅ |
-| `github_token` | GitHub Token（可选） | ❌ |
-| `port` | 服务端口号 | ❌ |
-| `rss_feeds` | RSS 订阅源列表 | ❌ |
-| `bio.name` | 你的名字 | ❌ |
-| `bio.title` | 标题/职位 | ❌ |
-| `bio.description` | 个人简介 | ❌ |
-| `bio.avatar` | 头像路径 | ❌ |
-| `social.*` | 社交链接 | ❌ |
-
----
-
-## 🌐 API 接口
-
-- `GET /` - 主页面
-- `GET /api/clear-cache` - 清除缓存
+| Option | Description | Required |
+|--------|-------------|----------|
+| `github_username` | GitHub username | ✅ |
+| `github_token` | GitHub Token (optional) | ❌ |
+| `port` | Server port | ❌ |
+| `rss_feeds` | RSS feed sources | ❌ |
+| `bio.name` | Your name | ❌ |
+| `bio.title` | Title/Position | ❌ |
+| `bio.description` | Bio description | ❌ |
+| `bio.avatar` | Avatar path | ❌ |
+| `social.*` | Social links | ❌ |
 
 ---
 
-## 🤝 贡献指南
+## 🌐 API Endpoints
 
-欢迎贡献代码！请阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 了解如何参与贡献。
+- `GET /` - Main page
+- `GET /api/clear-cache` - Clear cache
 
 ---
 
-## ❓ 常见问题
+## 🤝 Contributing
 
-### Q1: 如何获取 GitHub Token？
+Contributions welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md).
 
-1. 登录 GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
-2. 点击 "Generate new token (classic)"
-3. 勾选 `repo` 权限
-4. 复制生成的 Token
+---
 
-### Q2:为什么需要配置 Token？
+## ❓ FAQ
 
-- **无 Token**：每小时 60 次请求限制
-- **有 Token**：每小时 5000 次请求限制
+### Q1: How to get GitHub Token?
 
-### Q3:页面加载很慢怎么办？
+1. Login to GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
+2. Click "Generate new token (classic)"
+3. Select `repo` permission
+4. Copy the generated token
 
-1. 确认已配置 GitHub Token
-2. 检查网络连接
-3. 清除缓存后重试
+### Q2: Why configure Token?
 
-### Q4:如何自定义主题色？
+- **Without Token**: 60 requests/hour limit
+- **With Token**: 5000 requests/hour limit
 
-在 `config.yaml` 中设置 `theme` 参数：
+### Q3: Page loads slowly?
+
+1. Confirm GitHub Token is configured
+2. Check network connection
+3. Clear cache and retry
+
+### Q4: How to customize theme colors?
+
+Set `theme` in `config.yaml`:
 
 ```yaml
 theme:
@@ -397,71 +397,71 @@ theme:
   background: "#ffffff"
 ```
 
-### Q5:支持部署到哪些平台？
+### Q5: Which platforms supported?
 
 - ✅ Vercel
 - ✅ Netlify
 - ✅ Docker
 - ✅ Heroku
-- ✅ 任意 Python 环境
+- ✅ Any Python environment
 
 ---
 
-## 📊 性能对比
+## 📊 Performance Comparison
 
-| 指标 | 无缓存 | 有缓存 | 提升 |
-|------|--------|--------|------|
-| 首次加载 | 3-5s | 200-500ms | **90%+** |
-| API 请求 | 60次/小时 | 1次/24小时 | **98%+** |
-| 内存占用 | 50MB | 55MB | +10% |
-
----
-
-## 🏆 性能优化技巧
-
-1. **配置 Token**：提高 API 限制至 5000次/小时
-2. **合理缓存**：颜色缓存 24 小时，数据缓存可配置
-3. **CDN 加速**：静态资源使用 CDN
-4. **压缩资源**：启用 Gzip/Brotli 压缩
+| Metric | No Cache | With Cache | Improvement |
+|--------|----------|------------|-------------|
+| First load | 3-5s | 200-500ms | **90%+** |
+| API requests | 60/hour | 1/24 hours | **98%+** |
+| Memory usage | 50MB | 55MB | +10% |
 
 ---
 
-## 🙏 致谢
+## 🏆 Performance Tips
 
-感谢以下贡献者和项目：
-
-- [Flask](https://flask.palletsprojects.com/) - Web 框架
-- [PyGithub](https://pygithub.readthedocs.io/) - GitHub API Python 客户端
-- [Feedparser](https://feedparser.readthedocs.io/) - RSS 解析器
-- [ColorThief](https://github.com/stelllund/color-thief-python) - 颜色提取
-- 所有 Star 我们的开发者！
+1. **Configure Token**: Increase API limit to 5000/hour
+2. **Smart caching**: Color cached 24h, data cache configurable
+3. **CDN**: Use CDN for static assets
+4. **Compression**: Enable Gzip/Brotli
 
 ---
 
-## 📄 开源协议
+## 🙏 Acknowledgments
 
-本项目基于 MIT 协议开源 - 详见 [LICENSE](LICENSE)。
+Thanks to all contributors and projects:
+
+- [Flask](https://flask.palletsprojects.com/) - Web framework
+- [PyGithub](https://pygithub.readthedocs.io/) - GitHub API Python client
+- [Feedparser](https://feedparser.readthedocs.io/) - RSS parser
+- [ColorThief](https://github.com/stelllund/color-thief-python) - Color extraction
+- All developers who starred us!
 
 ---
 
-## 💬 交流讨论
+## 📄 License
 
-- 📮 问题反馈：[GitHub Issues](https://github.com/none-ai/openhome/issues)
-- 💡 功能建议：欢迎提交 Feature Request
+MIT License - see [LICENSE](LICENSE).
+
+---
+
+## 💬 Discussion
+
+- 📮 Issues: [GitHub Issues](https://github.com/none-ai/openhome/issues)
+- 💡 Features: Welcome to submit Feature Requests
 
 ---
 
 <div align="center">
 
-**如果这个项目对你有帮助，欢迎 Star ⭐ 支持！**
+**If this project helps you, please star ⭐!**
 
 [![Stargazers over time](https://starchart.cc/none-ai/openhome.svg)](https://github.com/none-ai/openhome/stargazers)
 
 ---
 
-### 🏢 谁在使用 OpenHome？
+### 🏢 Who Uses OpenHome?
 
-我们欢迎更多开发者和组织 [分享你们的使用案例](https://github.com/none-ai/openhome/discussions)！
+We welcome more developers and organizations to [share your use cases](https://github.com/none-ai/openhome/discussions)!
 
 <a href="https://github.com/stlin256" target="_blank">
   <img src="https://avatars.githubusercontent.com/u/45954254?s=64" alt="stlin256" width="48" height="48" style="border-radius: 50%;">
@@ -469,16 +469,15 @@ theme:
 
 ---
 
-### 💖 赞助支持
+### 💖 Sponsor
 
-如果你喜欢这个项目，欢迎赞助支持我们的开发工作！
+If you like this project, please sponsor our development!
 
 [![Sponsor](https://img.shields.io/badge/sponsor-❤️-pink?style=for-the-badge)](https://github.com/sponsors/none-ai)
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy_Me_A_Coffee-☕-orange?style=for-the-badge)](https://buymeacoffee.com/stlin256sclaw)
 
 ---
 
-Made with ❤️ by [stlin256](https://github.com/stlin256) · [📡 官方文档](https://github.com/none-ai/openhome#-安装方式) · [🐛 报告问题](https://github.com/none-ai/openhome/issues)
+Made with ❤️ by [stlin256](https://github.com/stlin256) · [📡 Documentation](https://github.com/none-ai/openhome#-installation) · [🐛 Report Issues](https://github.com/none-ai/openhome/issues)
 
 </div>
-# Test

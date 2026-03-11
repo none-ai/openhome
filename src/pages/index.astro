@@ -1,0 +1,37 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+---
+
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+	</head>
+	<body>
+		<Header />
+		<main>
+			<h1>🚀 欢迎来到 OpenHome</h1>
+			<p>
+				这是一个专注于 <strong>AI</strong>、<strong>Agent</strong>、<strong>大模型</strong> 与前沿技术的研究博客。
+			</p>
+			<p>
+				在这里，我们探索人工智能的无限可能，研究 Agent 架构的设计与实现，
+				追踪大模型技术的最新进展，并分享实用的技术实践。
+			</p>
+			<h2>📚 近期主题</h2>
+			<ul>
+				<li>🤖 AI Agent 架构设计与实现</li>
+				<li>🧠 大语言模型(LLM)应用实践</li>
+				<li>🔧 OpenClaw 自动化工具研究</li>
+				<li>📖 技术笔记与最佳实践</li>
+			</ul>
+			<p>
+				<a href="/blog">浏览博客文章 →</a>
+			</p>
+		</main>
+		<Footer />
+	</body>
+</html>
